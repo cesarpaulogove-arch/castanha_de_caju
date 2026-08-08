@@ -12,8 +12,8 @@ export const ENTREGADORES: Entregador[] = [
     id: 1,
     nome: 'ANA PAULO',
     foto: '/ana.png',
-    latitude: -25.9653,
-    longitude: 32.5892,
+    latitude: -25.9124,
+    longitude: 32.5784,
     online: true
   },
   {
@@ -28,8 +28,8 @@ export const ENTREGADORES: Entregador[] = [
     id: 3,
     nome: 'CESAR GOVE',
     foto: '/cesar.png',
-    latitude: -25.9124,
-    longitude: 32.5784,
+    latitude: -25.9653,
+    longitude: 32.5892,
     online: true
   },
   {
