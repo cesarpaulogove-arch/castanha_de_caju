@@ -64,21 +64,7 @@ export default function Header() {
             >
               <User className="w-4 h-4 text-amber-500" /> Perfil de Utilizador
             </Link>
-            <Link 
-              href="/historico" 
-              onClick={() => setMenuAberto(false)}
-              className="flex items-center gap-2.5 text-sm font-bold text-gray-300 hover:text-white py-1"
-            >
-              <History className="w-4 h-4 text-amber-500" /> Histórico de Encomendas
-            </Link>
-            {/* Adicionado o link de Estatísticas Mobile */}
-            <Link 
-              href="/estatistica" 
-              onClick={() => setMenuAberto(false)}
-              className="flex items-center gap-2.5 text-sm font-bold text-gray-300 hover:text-white py-1"
-            >
-              <BarChart3 className="w-4 h-4 text-amber-500" /> Gráficos e Estatísticas
-            </Link>
+           
             <Link 
               href="/contactos" 
               onClick={() => setMenuAberto(false)}
