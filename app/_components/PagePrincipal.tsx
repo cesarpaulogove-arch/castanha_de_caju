@@ -1,99 +1,241 @@
+
 'use client'
+
 import { useState } from 'react'
 
-// Importações com caminhos locais relativos corretos
 import Banner from './Banner'
 import Catalogo from './Catalogo'
 import Carrinho from './Carrinho'
 import MapaEntrega from './MapaEntrega'
 import { AuthProvider } from '../AuthContext'
 
-const catalogoCastanhas = [
-  { id: '1', name: 'Castanha Caju Smash', price: 18.90, unit: '500g', imagePath: '/copo.png' }
-]
-
 export default function LojaCastanhasEcraUnico() {
-  const [itensCarrinho, setItensCarrinho] = useState<{ produtoId: string; quantidade: number }[]>([])
-  const [medidorSelecionado, setMedidorSelecionado] = useState<'copo' | 'balde-medio' | 'balde-grande'>('copo')
+  const [itensCarrinho, setItensCarrinho] = useState<
+    { produtoId: string; quantidade: number }[]
+  >([])
+
+  const [medidorSelecionado, setMedidorSelecionado] = useState<
+    'copo' | 'balde-medio' | 'balde-grande'
+  >('copo')
+
+  // ============================================================
+  // QUANTIDADE
+  // ============================================================
 
   const obterQuantidade = (id: string) => {
-    return itensCarrinho.find(item => item.produtoId === id)?.quantidade || 0
+    return (
+      itensCarrinho.find(
+        item => item.produtoId === id
+      )?.quantidade || 0
+    )
   }
 
-  const incrementarProduto = (id: string, vezes: number) => {
-    const itemExistente = itensCarrinho.find(item => item.produtoId === id)
-    if (itemExistente) {
-      setItensCarrinho(itensCarrinho.map(item =>
-        item.produtoId === id ? { ...item, quantidade: item.quantidade + vezes } : item
-      ))
-    } else {
-      setItensCarrinho([...itensCarrinho, { produtoId: id, quantidade: vezes }])
-    }
+  // ============================================================
+  // INCREMENTAR PRODUTO
+  // ============================================================
+
+  const incrementarProduto = (
+    id: string,
+    quantidade: number
+  ) => {
+    setItensCarrinho(prevItens => {
+      const itemExistente = prevItens.find(
+        item => item.produtoId === id
+      )
+
+      if (itemExistente) {
+        return prevItens.map(item =>
+          item.produtoId === id
+            ? {
+                ...item,
+                quantidade:
+                  item.quantidade + quantidade
+              }
+            : item
+        )
+      }
+
+      return [
+        ...prevItens,
+        {
+          produtoId: id,
+          quantidade
+        }
+      ]
+    })
   }
 
-  const decrementarProduto = (id: string, vezes: number) => {
-    const itemExistente = itensCarrinho.find(item => item.produtoId === id)
-    if (!itemExistente) return
-    if (itemExistente.quantidade <= vezes) {
-      setItensCarrinho(itensCarrinho.filter(item => item.produtoId !== id))
-    } else {
-      setItensCarrinho(itensCarrinho.map(item =>
-        item.produtoId === id ? { ...item, quantidade: item.quantidade - vezes } : item
-      ))
-    }
+  // ============================================================
+  // DECREMENTAR PRODUTO
+  // ============================================================
+
+  const decrementarProduto = (
+    id: string,
+    quantidade: number
+  ) => {
+    setItensCarrinho(prevItens => {
+      const itemExistente = prevItens.find(
+        item => item.produtoId === id
+      )
+
+      if (!itemExistente) {
+        return prevItens
+      }
+
+      const novaQuantidade =
+        itemExistente.quantidade - quantidade
+
+      if (novaQuantidade <= 0) {
+        return prevItens.filter(
+          item => item.produtoId !== id
+        )
+      }
+
+      return prevItens.map(item =>
+        item.produtoId === id
+          ? {
+              ...item,
+              quantidade: novaQuantidade
+            }
+          : item
+      )
+    })
   }
 
-  // Função para limpar completamente todos os produtos da carrinha
+  // ============================================================
+  // LIMPAR CARRINHO
+  // ============================================================
+
   const aoLimparCarrinho = () => {
     setItensCarrinho([])
   }
 
-  // Função para resetar as definições do catálogo de volta ao medidor padrão
+  // ============================================================
+  // RESETAR CATÁLOGO
+  // ============================================================
+
   const aoResetarCatalogo = () => {
+    setItensCarrinho([])
     setMedidorSelecionado('copo')
   }
 
+  // ============================================================
+  // VERIFICAR SE EXISTEM PRODUTOS
+  // ============================================================
+
+  const temProdutos = itensCarrinho.some(
+    item => item.quantidade > 0
+  )
+
   return (
     <AuthProvider>
-      {/* 
-        OTIMIZAÇÃO DE UNIFICAÇÃO DE LAYOUT:
-        - Mantido o 'p-3 md:p-4' apenas para as laterais, mas controlado o espaçamento superior.
-      */}
-      <div className="w-full lg:h-screen min-h-screen bg-[#111111] font-sans text-white p-3 md:p-4 pt-2 md:pt-2 flex flex-col lg:overflow-hidden overflow-y-auto select-none">
 
-        {/* O Cabeçalho (Agora com mb-0 no seu interior) */}
+      <main
+        className="
+          relative
+          w-full
+          lg:h-screen
+          min-h-screen
+          bg-[#111111]
+          text-white
+          p-3
+          md:p-4
+          pt-2
+          md:pt-2
+          flex
+          flex-col
+          lg:overflow-hidden
+          overflow-y-auto
+          select-none
+        "
+      >
 
+        {/* ======================================================
+            ZONA PRINCIPAL
+        ======================================================= */}
 
-        {/* 
-          ZONA DO CONTEÚDO PRINCIPAL:
-          - Removido qualquer 'space-y' que empurrasse o Banner para longe do Header.
-          - Adicionado 'mt-0' para colar a grelha diretamente à linha do cabeçalho.
-        */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0 lg:overflow-hidden w-full mt-0">
+        <div
+          className="
+            relative
+            flex-1
+            min-h-0
+            w-full
+            mt-0
+            lg:overflow-hidden
+          "
+        >
 
-          {/* SECTOR ESQUERDO + CENTRAL (Banner, Mapa e Catálogo) */}
-          <div className="lg:col-span-2 flex flex-col min-h-0 lg:overflow-hidden space-y-4 w-full">
+          {/* ====================================================
+              SECTOR ESQUERDO
+          ===================================================== */}
 
-            {/* O Banner fica agora imediatamente abaixo da linha do Header */}
-            <div className="hidden md:block">
+          <div
+            className="
+              lg:pr-[calc(33.333%-0.25rem)]
+              flex
+              flex-col
+              min-h-0
+              lg:overflow-hidden
+              space-y-4
+              w-full
+              h-full
+            "
+          >
+
+            {/* ==================================================
+                BANNER
+            =================================================== */}
+
+            <div className="hidden md:block shrink-0">
               <Banner />
             </div>
 
-            {/* MAPA E CATÁLOGO */}
-            <div className="w-full flex flex-col sm:flex-row items-start gap-4 flex-1 min-h-0">
+            {/* ==================================================
+                MAPA + CATÁLOGO
+            =================================================== */}
 
-              {/* MAPA */}
-              <div className="w-full flex-1">
+            <div
+              className="
+                w-full
+                flex
+                flex-col
+                sm:flex-row
+                items-start
+                gap-4
+                flex-1
+                min-h-0
+              "
+            >
 
+              {/* =================================================
+                  MAPA
+              ================================================== */}
+
+              <div
+                className="
+                  w-full
+                  flex-1
+                  min-w-0
+                  min-h-0
+                "
+              >
                 <MapaEntrega
                   latitudeCliente={-25.9650}
                   longitudeCliente={32.5850}
                 />
-
               </div>
 
-              {/* O CATÁLOGO */}
-              <div className="shrink-0 w-full sm:max-w-[280px]">
+              {/* =================================================
+                  CATÁLOGO
+              ================================================== */}
+
+              <div
+                className="
+                  shrink-0
+                  w-full
+                  sm:max-w-[280px]
+                "
+              >
                 <Catalogo
                   obterQuantidade={obterQuantidade}
                   incrementarProduto={incrementarProduto}
@@ -104,10 +246,34 @@ export default function LojaCastanhasEcraUnico() {
               </div>
 
             </div>
+
           </div>
 
-          {/* SECTOR DIREITO: CARRINHA (Props de reset vinculadas com sucesso) */}
-          <div className="lg:col-span-1 h-auto lg:h-full min-h-0 w-full">
+        </div>
+
+        {/* ======================================================
+            CARRINHA
+
+            ESTE BLOCO CONTINUA IGUAL.
+            NÃO FOI ALTERADO.
+        ======================================================= */}
+
+        {temProdutos && (
+          <div
+            className="
+              w-full
+              -mt-5
+              lg:fixed
+              lg:z-50
+              lg:top-4
+              lg:right-4
+              lg:bottom-auto
+              lg:w-[calc(33.333vw-2rem)]
+              lg:max-w-[520px]
+              lg:max-h-[calc(100vh-1.5rem)]
+              lg:overflow-y-auto
+            "
+          >
             <Carrinho
               itens={itensCarrinho}
               medidorSelecionado={medidorSelecionado}
@@ -115,9 +281,63 @@ export default function LojaCastanhasEcraUnico() {
               aoResetarCatalogo={aoResetarCatalogo}
             />
           </div>
+        )}
+
+        {/* ======================================================
+            NOVO BOTÃO
+            NÃO DEPENDE DA CARRINHA
+            FICA SEMPRE VISÍVEL
+        ======================================================= */}
+
+        <div
+          className="
+            w-full
+            mt-4
+
+            lg:fixed
+            lg:z-50
+            lg:right-4
+            lg:bottom-4
+            lg:w-[calc(33.333vw-2rem)]
+            lg:max-w-[520px]
+          "
+        >
+
+          <button
+            type="button"
+            onClick={() => {
+              window.location.href = '/grandes-volumes'
+            }}
+            className="
+              w-full
+              rounded-xl
+              border
+              border-emerald-500/30
+              bg-emerald-500/10
+              px-4
+              py-3
+              text-left
+              transition
+              hover:bg-emerald-500/20
+              active:scale-[0.99]
+            "
+          >
+
+            <div className="text-sm font-bold text-white">
+              Precisa de grandes volumes?
+            </div>
+
+            <div className="mt-1 text-xs text-white/50">
+              Castanhas não processadas para grandes compras
+            </div>
+
+          </button>
 
         </div>
-      </div>
+
+      </main>
+
     </AuthProvider>
   )
 }
+

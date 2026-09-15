@@ -176,7 +176,7 @@ export default function Catalogo({
 
   return (
 
-    <div className="w-full flex flex-col gap-3">
+    <div className="-mt-0 w-full flex flex-col gap-3">
 
 
       {/* ============================================= */}

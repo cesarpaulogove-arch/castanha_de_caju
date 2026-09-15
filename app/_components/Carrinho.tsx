@@ -542,10 +542,16 @@ export default function Carrinho({
   // INTERFACE
   // ==============================
 
+    if (totalItensCarrinho === 0) {
+    return null
+  }
+
+
   return (
 
     <div
       className="
+        mt-11
         border border-white/10
         rounded-xl
         p-5
