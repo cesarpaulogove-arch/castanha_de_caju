@@ -1,4 +1,3 @@
-
 'use client'
 
 import CardGrandeVolume from './CardGrandeVolume'
@@ -47,4 +46,3 @@ export default function MedidoresGrandeEscala({
     </div>
   )
 }
-

@@ -1,20 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowLeft, ShoppingCart } from 'lucide-react'
+import {
+  ArrowLeft,
+  ShoppingCart,
+} from 'lucide-react'
+
+
 import BannerGrandesVolumes from '../components/BannerGrandesVolumes'
 import MedidoresGrandeEscala from '../components/MedidoresGrandeEscala'
 import PedidoGrandeVolume from '../components/PedidoGrandeVolume'
-
-export interface MedidorGrandeVolume {
-  id: string
-  nome: string
-  quantidade: number
-  unidade: 'kg' | 'ton'
-  descricao: string
-  imagem: string
-  preco: number
-}
+import { MedidorGrandeVolume } from '../types/medidor'
 
 export const MEDIDORES_GRANDE_ESCALA: MedidorGrandeVolume[] = [
   {
@@ -109,12 +105,12 @@ export const MEDIDORES_GRANDE_ESCALA: MedidorGrandeVolume[] = [
   },
 ]
 
-
 export default function GrandesVolumesPage() {
   const [selecionado, setSelecionado] =
     useState<MedidorGrandeVolume | null>(null)
 
-  const [mostrarPedido, setMostrarPedido] = useState(false)
+  const [mostrarPedido, setMostrarPedido] =
+    useState(false)
 
   const selecionarVolume = (
     medidor: MedidorGrandeVolume
@@ -124,146 +120,173 @@ export default function GrandesVolumesPage() {
   }
 
   return (
-  <main className="min-h-screen w-full bg-[#fff8e8] text-[#1f2937]">
+    <main className="min-h-screen w-full bg-[#fff8e8] text-[#1f2937]">
 
-    {/* BANNER — 100% DA LARGURA DA TELA */}
-    <div className="w-full">
-      <BannerGrandesVolumes
-        onSolicitar={() => {
-          setSelecionado(null)
-          setMostrarPedido(true)
-        }}
-      />
-    </div>
+      {/* BANNER */}
+      <div className="w-full">
+        <BannerGrandesVolumes
+          onSolicitar={() => {
+            setSelecionado(null)
+            setMostrarPedido(true)
+          }}
+        />
+      </div>
 
-    {/* RESTANTE DO CONTEÚDO */}
-    <div className="mx-auto w-full max-w-7xl px-4 pb-12 pt-8 md:px-6 lg:px-8">
-
-      {/* VOLTAR */}
-      <button
-        type="button"
-        onClick={() => window.history.back()}
+      {/* CONTEÚDO */}
+      <div
         className="
-          mb-4
-          flex
-          items-center
-          gap-2
-          rounded-lg
-          px-2
-          py-2
-          text-sm
-          font-semibold
-          text-gray-600
-          transition
-          hover:bg-green-900/5
-          hover:text-green-800
+          mx-auto
+          w-full
+          max-w-7xl
+          px-4
+          pb-12
+          pt-8
+          md:px-6
+          lg:px-8
         "
       >
-        <ArrowLeft size={18} />
-        Voltar
-      </button>
 
-      {/* TÍTULO */}
-      <section className="mt-8">
-
-        <div className="mb-5 flex items-end justify-between gap-4">
-
-          <div>
-            <p className="mb-1 text-xs font-bold uppercase tracking-wider text-green-700">
-              Escolha a quantidade
-            </p>
-          </div>
-
-          {selecionado && (
-            <div
-              className="
-                hidden
-                items-center
-                gap-2
-                rounded-xl
-                border
-                border-green-700/20
-                bg-green-700/10
-                px-4
-                py-2
-                text-sm
-                md:flex
-              "
-            >
-              <ShoppingCart
-                size={17}
-                className="text-green-700"
-              />
-
-              <span className="font-semibold text-green-900">
-                {selecionado.nome}
-              </span>
-            </div>
-          )}
-
-        </div>
-
-        {/* CARTÕES */}
-        <MedidoresGrandeEscala
-          medidores={MEDIDORES_GRANDE_ESCALA}
-          selecionado={selecionado}
-          onSelecionar={selecionarVolume}
-        />
-
-      </section>
-
-      {/* PEDIDO PERSONALIZADO */}
-      <section className="mt-10">
-
-        <div
+        {/* VOLTAR */}
+        <button
+          type="button"
+          onClick={() => window.history.back()}
           className="
-            rounded-3xl
-            border
-            border-green-900/10
-            bg-white/70
-            p-5
-            shadow-sm
-            md:p-7
+            mb-4
+            flex
+            items-center
+            gap-2
+            rounded-lg
+            px-2
+            py-2
+            text-sm
+            font-semibold
+            text-gray-600
+            transition
+            hover:bg-green-900/5
+            hover:text-green-800
           "
         >
+          <ArrowLeft size={18} />
+          Voltar
+        </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              setSelecionado(null)
-              setMostrarPedido(true)
-            }}
+        {/* PRODUTOS */}
+        <section className="mt-8">
+
+          <div
             className="
-              rounded-xl
-              bg-green-700
-              px-5
-              py-3
-              text-sm
-              font-black
-              text-white
-              shadow-sm
-              transition
-              hover:bg-green-800
-              active:scale-[0.98]
+              mb-5
+              flex
+              items-end
+              justify-between
+              gap-4
             "
           >
-             Especifique a quantidade?
-          </button>
 
-        </div>
+            <div>
+              <p
+                className="
+                  mb-1
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wider
+                  text-green-700
+                "
+              >
+                Escolha a quantidade
+              </p>
+            </div>
 
-      </section>
+            {selecionado && (
+              <div
+                className="
+                  hidden
+                  items-center
+                  gap-2
+                  rounded-xl
+                  border
+                  border-green-700/20
+                  bg-green-700/10
+                  px-4
+                  py-2
+                  text-sm
+                  md:flex
+                "
+              >
+                <ShoppingCart
+                  size={17}
+                  className="text-green-700"
+                />
 
-    </div>
+                <span className="font-semibold text-green-900">
+                  {selecionado.nome}
+                </span>
+              </div>
+            )}
 
-    {/* MODAL / FORMULÁRIO */}
-    {mostrarPedido && (
-      <PedidoGrandeVolume
-        volumeSelecionado={selecionado}
-        onFechar={() => setMostrarPedido(false)}
-      />
-    )}
+          </div>
 
-  </main>
-)
+          <MedidoresGrandeEscala
+            medidores={MEDIDORES_GRANDE_ESCALA}
+            selecionado={selecionado}
+            onSelecionar={selecionarVolume}
+          />
+
+        </section>
+
+        {/* PEDIDO PERSONALIZADO */}
+        <section className="mt-10">
+
+          <div
+            className="
+              rounded-3xl
+              border
+              border-green-900/10
+              bg-white/70
+              p-5
+              shadow-sm
+              md:p-7
+            "
+          >
+
+            <button
+              type="button"
+              onClick={() => {
+                setSelecionado(null)
+                setMostrarPedido(true)
+              }}
+              className="
+                rounded-xl
+                bg-green-700
+                px-5
+                py-3
+                text-sm
+                font-black
+                text-white
+                shadow-sm
+                transition
+                hover:bg-green-800
+                active:scale-[0.98]
+              "
+            >
+              Especifique a quantidade?
+            </button>
+
+          </div>
+
+        </section>
+
+      </div>
+
+      {/* FORMULÁRIO */}
+      {mostrarPedido && (
+        <PedidoGrandeVolume
+          volumeSelecionado={selecionado}
+          onFechar={() => setMostrarPedido(false)}
+        />
+      )}
+
+    </main>
+  )
 }

@@ -11,14 +11,10 @@ import {
   Send,
 } from 'lucide-react'
 
-import type {
-  MedidorGrandeVolume,
-} from '../page'
+import type { MedidorGrandeVolume } from '../types/medidor'
 
 interface PedidoGrandeVolumeProps {
-  volumeSelecionado:
-    | MedidorGrandeVolume
-    | null
+  volumeSelecionado: MedidorGrandeVolume | null
   onFechar: () => void
 }
 
@@ -26,31 +22,21 @@ export default function PedidoGrandeVolume({
   volumeSelecionado,
   onFechar,
 }: PedidoGrandeVolumeProps) {
-
   const [nome, setNome] = useState('')
   const [telefone, setTelefone] = useState('')
   const [localizacao, setLocalizacao] = useState('')
-  const [quantidade, setQuantidade] =
-    useState(
-      volumeSelecionado
-        ? String(volumeSelecionado.quantidade)
-        : ''
-    )
 
-  const [unidade, setUnidade] =
-    useState(
-      volumeSelecionado?.quantidade &&
-      volumeSelecionado.quantidade >= 1000
-        ? 'kg'
-        : 'kg'
-    )
+  const [quantidade, setQuantidade] = useState(
+    volumeSelecionado
+      ? String(volumeSelecionado.quantidade)
+      : ''
+  )
 
-  const [mensagem, setMensagem] =
-    useState('')
+  const [unidade, setUnidade] = useState('kg')
 
-  const enviarPedido = (
-    e: React.FormEvent
-  ) => {
+  const [mensagem, setMensagem] = useState('')
+
+  const enviarPedido = (e: React.FormEvent) => {
     e.preventDefault()
 
     const texto = `
@@ -72,8 +58,7 @@ Mensagem:
 ${mensagem || 'Nenhuma mensagem adicional.'}
     `.trim()
 
-    const textoCodificado =
-      encodeURIComponent(texto)
+    const textoCodificado = encodeURIComponent(texto)
 
     window.open(
       `https://wa.me/258870873423?text=${textoCodificado}`,
@@ -97,7 +82,6 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
         md:p-6
       "
     >
-
       <div
         className="
           relative
@@ -110,12 +94,12 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
           border-white/10
           bg-[#181818]
           p-5
+          text-white
           shadow-2xl
           md:rounded-3xl
           md:p-7
         "
       >
-
         {/* FECHAR */}
         <button
           type="button"
@@ -142,7 +126,6 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
 
         {/* CABEÇALHO */}
         <div className="pr-12">
-
           <div
             className="
               mb-3
@@ -167,7 +150,6 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
             Preencha os seus dados para solicitar
             castanhas de caju não processadas.
           </p>
-
         </div>
 
         {/* VOLUME SELECIONADO */}
@@ -181,7 +163,6 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
             p-4
           "
         >
-
           <p className="text-xs font-semibold text-gray-500">
             Volume solicitado
           </p>
@@ -191,7 +172,6 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
               ? volumeSelecionado.nome
               : 'Quantidade personalizada'}
           </p>
-
         </div>
 
         {/* FORMULÁRIO */}
@@ -199,16 +179,13 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
           onSubmit={enviarPedido}
           className="mt-6"
         >
-
           {/* NOME */}
           <div className="mb-4">
-
             <label className="mb-2 block text-xs font-bold text-gray-300">
               Nome
             </label>
 
             <div className="relative">
-
               <User
                 size={18}
                 className="
@@ -243,20 +220,16 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
                   focus:border-green-500
                 "
               />
-
             </div>
-
           </div>
 
           {/* TELEFONE */}
           <div className="mb-4">
-
             <label className="mb-2 block text-xs font-bold text-gray-300">
               Telefone
             </label>
 
             <div className="relative">
-
               <Phone
                 size={18}
                 className="
@@ -292,20 +265,16 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
                   focus:border-green-500
                 "
               />
-
             </div>
-
           </div>
 
           {/* LOCALIZAÇÃO */}
           <div className="mb-4">
-
             <label className="mb-2 block text-xs font-bold text-gray-300">
               Localização
             </label>
 
             <div className="relative">
-
               <MapPin
                 size={18}
                 className="
@@ -321,9 +290,7 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
                 required
                 value={localizacao}
                 onChange={(e) =>
-                  setLocalizacao(
-                    e.target.value
-                  )
+                  setLocalizacao(e.target.value)
                 }
                 placeholder="Cidade, bairro ou local"
                 className="
@@ -342,29 +309,23 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
                   focus:border-green-500
                 "
               />
-
             </div>
-
           </div>
 
           {/* QUANTIDADE */}
           <div className="mb-4">
-
             <label className="mb-2 block text-xs font-bold text-gray-300">
               Quantidade
             </label>
 
             <div className="flex gap-2">
-
               <input
                 required
                 type="number"
                 min="1"
                 value={quantidade}
                 onChange={(e) =>
-                  setQuantidade(
-                    e.target.value
-                  )
+                  setQuantidade(e.target.value)
                 }
                 placeholder="Quantidade"
                 className="
@@ -402,36 +363,23 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
                   focus:border-green-500
                 "
               >
-                <option value="kg">
-                  kg
-                </option>
-
+                <option value="kg">kg</option>
                 <option value="toneladas">
                   toneladas
                 </option>
-
-                <option value="sacos">
-                  sacos
-                </option>
-
-                <option value="latas">
-                  latas
-                </option>
+                <option value="sacos">sacos</option>
+                <option value="latas">latas</option>
               </select>
-
             </div>
-
           </div>
 
           {/* MENSAGEM */}
           <div className="mb-6">
-
             <label className="mb-2 block text-xs font-bold text-gray-300">
               Observações
             </label>
 
             <div className="relative">
-
               <MessageSquare
                 size={18}
                 className="
@@ -446,9 +394,7 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
                 rows={4}
                 value={mensagem}
                 onChange={(e) =>
-                  setMensagem(
-                    e.target.value
-                  )
+                  setMensagem(e.target.value)
                 }
                 placeholder="Descreva outras necessidades do seu pedido..."
                 className="
@@ -468,9 +414,7 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
                   focus:border-green-500
                 "
               />
-
             </div>
-
           </div>
 
           {/* ENVIAR */}
@@ -497,11 +441,8 @@ ${mensagem || 'Nenhuma mensagem adicional.'}
             <Send size={18} />
             Enviar pedido
           </button>
-
         </form>
-
       </div>
-
     </div>
   )
 }
