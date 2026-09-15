@@ -6,9 +6,15 @@ import {
   ShoppingCart,
 } from 'lucide-react'
 
-import type {
-  MedidorGrandeVolume,
-} from '../page'
+interface MedidorGrandeVolume {
+  id: string
+  nome: string
+  quantidade: number
+  unidade: 'kg' | 'ton'
+  descricao: string
+  imagem: string
+  preco: number
+}
 
 interface CardGrandeVolumeProps {
   medidor: MedidorGrandeVolume
@@ -36,10 +42,6 @@ export default function CardGrandeVolume({
     return `${medidor.quantidade} kg`
   }
 
-  const formatarPreco = (preco: number) => {
-    return `${preco.toLocaleString('pt-MZ')} MT`
-  }
-
   return (
     <article
       className={`
@@ -53,22 +55,13 @@ export default function CardGrandeVolume({
         duration-200
         ${
           selecionado
-            ? `
-              border-green-500
-              ring-2
-              ring-green-500/20
-              shadow-md
-            `
-            : `
-              border-gray-200
-              hover:border-green-500/40
-              hover:shadow-lg
-            `
+            ? 'border-green-500 ring-2 ring-green-500/20 shadow-md'
+            : 'border-gray-200 hover:border-green-500/40 hover:shadow-lg'
         }
       `}
     >
 
-      {/* MARCADOR */}
+      {/* CHECK */}
       {selecionado && (
         <div
           className="
@@ -91,58 +84,40 @@ export default function CardGrandeVolume({
         </div>
       )}
 
-      {/* IMAGEM */}
+      {/* IMAGEM DO PRODUTO */}
       <div
         className="
           flex
+          h-48
           w-full
           items-center
           justify-center
           bg-white
-          px-4
-          pt-4
+          p-4
         "
       >
-        <div
+        <img
+          src={medidor.imagem}
+          alt={medidor.nome}
           className="
-            flex
-            aspect-square
-            w-full
-            items-center
-            justify-center
-            overflow-hidden
+            max-h-full
+            max-w-full
+            object-contain
+            transition-transform
+            duration-300
+            group-hover:scale-105
           "
-        >
-          <img
-            src={medidor.imagem}
-            alt={medidor.nome}
-            className="
-              h-full
-              w-full
-              object-contain
-              transition-transform
-              duration-300
-              group-hover:scale-[1.04]
-            "
-          />
-        </div>
+        />
       </div>
 
-      {/* CONTEÚDO */}
-      <div
-        className="
-          px-4
-          pb-4
-          pt-2
-        "
-      >
+      {/* INFORMAÇÕES */}
+      <div className="px-4 pb-4">
 
-        {/* NOME */}
+        {/* PRODUTO */}
         <h3
           className="
-            truncate
             text-base
-            font-extrabold
+            font-bold
             leading-tight
             text-gray-900
           "
@@ -155,7 +130,6 @@ export default function CardGrandeVolume({
           className="
             mt-1
             text-sm
-            font-medium
             text-gray-500
           "
         >
@@ -167,78 +141,39 @@ export default function CardGrandeVolume({
           className="
             mt-3
             flex
-            items-end
+            items-center
             justify-between
-            gap-3
           "
         >
 
           {/* PREÇO */}
-          <div className="min-w-0">
-            <p
-              className="
-                text-[10px]
-                font-bold
-                uppercase
-                tracking-wide
-                text-gray-400
-              "
-            >
-              Preço
-            </p>
-
-            <p
-              className="
-                mt-0.5
-                whitespace-nowrap
-                text-lg
-                font-black
-                leading-none
-                text-green-700
-              "
-            >
-              {formatarPreco(medidor.preco)}
-            </p>
-          </div>
+          <span
+            className="
+              text-lg
+              font-black
+              text-green-700
+            "
+          >
+            {medidor.preco.toLocaleString('pt-MZ')} MT
+          </span>
 
           {/* CARRINHO */}
           <button
             type="button"
             onClick={onSelecionar}
-            aria-label={
-              selecionado
-                ? `Remover ${medidor.nome}`
-                : `Adicionar ${medidor.nome} ao carrinho`
-            }
-            title={
-              selecionado
-                ? 'Selecionado'
-                : 'Adicionar ao carrinho'
-            }
+            aria-label={`Adicionar ${medidor.nome} ao carrinho`}
             className={`
               flex
               h-10
               w-10
-              shrink-0
               items-center
               justify-center
-              rounded-xl
+              rounded-full
               transition-all
-              duration-200
               ${
                 selecionado
-                  ? `
-                    bg-green-600
-                    text-white
-                    shadow-md
-                  `
-                  : `
-                    bg-green-700
-                    text-white
-                    hover:bg-green-800
-                    hover:scale-105
-                    active:scale-95
-                  `
+                  ? 'bg-green-600 text-white'
+                  : 'bg-green-700 text-white hover:bg-green-800 hover:scale-105 active:scale-95'
               }
             `}
           >
