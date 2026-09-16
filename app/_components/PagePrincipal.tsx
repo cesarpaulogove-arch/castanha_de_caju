@@ -1,7 +1,12 @@
-
 'use client'
 
 import { useState } from 'react'
+import {
+  ShoppingCart,
+  MapPin,
+  Phone,
+  ArrowRight,
+} from 'lucide-react'
 
 import Banner from './Banner'
 import Catalogo from './Catalogo'
@@ -49,7 +54,7 @@ export default function LojaCastanhasEcraUnico() {
             ? {
                 ...item,
                 quantidade:
-                  item.quantidade + quantidade
+                  item.quantidade + quantidade,
               }
             : item
         )
@@ -59,8 +64,8 @@ export default function LojaCastanhasEcraUnico() {
         ...prevItens,
         {
           produtoId: id,
-          quantidade
-        }
+          quantidade,
+        },
       ]
     })
   }
@@ -95,7 +100,7 @@ export default function LojaCastanhasEcraUnico() {
         item.produtoId === id
           ? {
               ...item,
-              quantidade: novaQuantidade
+              quantidade: novaQuantidade,
             }
           : item
       )
@@ -209,7 +214,7 @@ export default function LojaCastanhasEcraUnico() {
 
               {/* =================================================
                   MAPA
-              ================================================== */}
+              ================================================= */}
 
               <div
                 className="
@@ -227,7 +232,7 @@ export default function LojaCastanhasEcraUnico() {
 
               {/* =================================================
                   CATÁLOGO
-              ================================================== */}
+              ================================================= */}
 
               <div
                 className="
@@ -241,7 +246,9 @@ export default function LojaCastanhasEcraUnico() {
                   incrementarProduto={incrementarProduto}
                   decrementarProduto={decrementarProduto}
                   medidorSelecionado={medidorSelecionado}
-                  setMedidorSelecionado={setMedidorSelecionado}
+                  setMedidorSelecionado={
+                    setMedidorSelecionado
+                  }
                 />
               </div>
 
@@ -253,9 +260,6 @@ export default function LojaCastanhasEcraUnico() {
 
         {/* ======================================================
             CARRINHA
-
-            ESTE BLOCO CONTINUA IGUAL.
-            NÃO FOI ALTERADO.
         ======================================================= */}
 
         {temProdutos && (
@@ -284,9 +288,8 @@ export default function LojaCastanhasEcraUnico() {
         )}
 
         {/* ======================================================
-            NOVO BOTÃO
-            NÃO DEPENDE DA CARRINHA
-            FICA SEMPRE VISÍVEL
+            CASTANHAS NÃO PROCESSADAS
+            BOTÃO SEMPRE VISÍVEL
         ======================================================= */}
 
         <div
@@ -309,6 +312,7 @@ export default function LojaCastanhasEcraUnico() {
               window.location.href = '/grandes-volumes'
             }}
             className="
+              group
               w-full
               rounded-xl
               border
@@ -317,18 +321,126 @@ export default function LojaCastanhasEcraUnico() {
               px-4
               py-3
               text-left
-              transition
+              cursor-pointer
+              transition-all
+              duration-300
+              hover:border-emerald-400/50
               hover:bg-emerald-500/20
+              hover:shadow-lg
+              hover:shadow-emerald-500/10
               active:scale-[0.99]
             "
           >
 
-            <div className="text-sm font-bold text-white">
-              Precisa de grandes volumes?
-            </div>
+            <div
+              className="
+                flex
+                items-center
+                justify-between
+                gap-4
+              "
+            >
 
-            <div className="mt-1 text-xs text-white/50">
-              Castanhas não processadas para grandes compras
+              {/* =================================================
+                  TEXTO + ÍCONE
+              ================================================== */}
+
+              <div
+                className="
+                  flex
+                  items-center
+                  gap-3
+                  min-w-0
+                "
+              >
+
+                {/* =================================================
+                    ÍCONE
+                ================================================== */}
+
+                <div
+                  className="
+                    shrink-0
+                    flex
+                    h-10
+                    w-10
+                    items-center
+                    justify-center
+                    rounded-full
+                    bg-emerald-500
+                    text-white
+                    shadow-lg
+                    shadow-emerald-500/20
+                    transition-transform
+                    duration-300
+                    group-hover:scale-110
+                  "
+                >
+                  <ShoppingCart
+                    size={19}
+                    strokeWidth={2.3}
+                  />
+                </div>
+
+                {/* =================================================
+                    INFORMAÇÃO
+                ================================================== */}
+
+                <div className="min-w-0">
+
+                  <div
+                    className="
+                      text-sm
+                      font-bold
+                      text-white
+                      leading-tight
+                    "
+                  >
+                    Castanhas não processadas
+                  </div>
+
+                  <div
+                    className="
+                      mt-1
+                      text-xs
+                      text-white/60
+                      leading-tight
+                    "
+                  >
+                    Compre em grandes volumes diretamente
+                  </div>
+
+                </div>
+
+              </div>
+
+              {/* =================================================
+                  SETA
+              ================================================== */}
+
+              <div
+                className="
+                  shrink-0
+                  flex
+                  h-9
+                  w-9
+                  items-center
+                  justify-center
+                  rounded-full
+                  bg-white/10
+                  text-white
+                  transition-all
+                  duration-300
+                  group-hover:bg-emerald-500
+                  group-hover:translate-x-1
+                "
+              >
+                <ArrowRight
+                  size={18}
+                  strokeWidth={2.5}
+                />
+              </div>
+
             </div>
 
           </button>
@@ -340,4 +452,3 @@ export default function LojaCastanhasEcraUnico() {
     </AuthProvider>
   )
 }
-
