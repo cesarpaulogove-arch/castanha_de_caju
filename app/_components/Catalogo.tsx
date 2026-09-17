@@ -97,8 +97,7 @@ export default function Catalogo({
   // QUANTIDADE
   // ===================================================
 
-  const qtdTotal =
-    obterQuantidade(produtoIdFixo)
+  const qtdTotal = obterQuantidade(produtoIdFixo)
 
   // ===================================================
   // MEDIDOR ATIVO
@@ -117,14 +116,14 @@ export default function Catalogo({
     PRECO_BASE_COPO *
     medidorAtivo.equivaleA
 
+  // Evita aviso de variável não utilizada
+  void precoDinamico
+
   // ===================================================
   // FORMATAR PREÇO
   // ===================================================
 
-  const formataPreco = (
-    valor: number
-  ) => {
-
+  const formataPreco = (valor: number) => {
     return new Intl.NumberFormat(
       'de-DE',
       {
@@ -176,14 +175,13 @@ export default function Catalogo({
 
   return (
 
-    <div className="-mt-0 w-full flex flex-col gap-3">
-
+    <div className="flex w-full flex-col gap-3">
 
       {/* ============================================= */}
       {/* CARDS DOS MEDIDORES */}
       {/* ============================================= */}
 
-      <div className="grid grid-cols-3 gap-2 w-full">
+      <div className="grid w-full grid-cols-3 gap-2">
 
         {MEDIDORES.map((m) => {
 
@@ -199,48 +197,44 @@ export default function Catalogo({
             <button
               key={m.id}
               type="button"
-
               onClick={() =>
                 setMedidorSelecionado(m.id)
               }
-
+              aria-pressed={selecionado}
               className={`
                 relative
-                min-h-[125px]
-                rounded-xl
-                border
-                p-3
-
                 flex
+                min-h-[135px]
                 flex-col
-
                 items-center
                 justify-between
-
+                rounded-2xl
+                border-2
+                p-3
                 transition-all
                 duration-200
-
                 active:scale-95
 
                 ${
                   selecionado
                     ? `
-                      bg-white
-                      border-amber-500
+                      border-[#166534]
+                      bg-[#dcfce7]
+                      shadow-md
                       ring-2
-                      ring-amber-500/20
-                      shadow-lg
+                      ring-[#166534]/20
                     `
                     : `
-                      bg-[#f5f5f5]
-                      border-gray-200
-                      hover:bg-white
+                      border-[#e7d5b8]
+                      bg-white
+                      shadow-sm
+                      hover:border-[#86a873]
+                      hover:bg-[#f0fdf4]
                       hover:shadow-md
                     `
                 }
               `}
             >
-
 
               {/* INDICADOR DE SELEÇÃO */}
 
@@ -249,32 +243,29 @@ export default function Catalogo({
                 <div
                   className="
                     absolute
-                    top-2
                     right-2
-
-                    w-2.5
-                    h-2.5
-
+                    top-2
+                    h-3
+                    w-3
                     rounded-full
-
-                    bg-amber-500
+                    border-2
+                    border-white
+                    bg-[#166534]
+                    shadow-sm
                   "
                 />
 
               )}
-
 
               {/* IMAGEM */}
 
               <div
                 className="
                   relative
-
-                  w-12
                   h-12
-
-                  sm:w-14
+                  w-12
                   sm:h-14
+                  sm:w-14
                 "
               >
 
@@ -282,59 +273,49 @@ export default function Catalogo({
                   src={m.image}
                   alt={m.name}
                   fill
+                  sizes="56px"
                   className="object-contain"
                 />
 
               </div>
 
-
               {/* NOME */}
 
               <span
                 className={`
-                  text-[11px]
-                  sm:text-xs
-
-                  font-black
-
                   text-center
+                  text-[11px]
+                  font-black
+                  sm:text-xs
 
                   ${
                     selecionado
-                      ? 'text-amber-600'
-                      : 'text-gray-700'
+                      ? 'text-[#166534]'
+                      : 'text-[#422006]'
                   }
                 `}
               >
-
                 {m.name}
-
               </span>
-
 
               {/* PREÇO */}
 
               <span
                 className={`
-                  text-[9px]
-                  sm:text-[10px]
-
-                  font-black
-
                   text-center
+                  text-[10px]
+                  font-extrabold
+                  sm:text-xs
 
                   ${
                     selecionado
-                      ? 'text-amber-600'
-                      : 'text-gray-600'
+                      ? 'text-[#166534]'
+                      : 'text-[#92400e]'
                   }
                 `}
               >
-
                 {formataPreco(preco)} MT
-
               </span>
-
 
             </button>
 
@@ -344,31 +325,24 @@ export default function Catalogo({
 
       </div>
 
-
       {/* ============================================= */}
       {/* PAINEL DE CONTROLO */}
       {/* ============================================= */}
 
       <div
         className="
-          w-full
-
-          bg-[#161616]
-
-          border
-          border-white/5
-
-          rounded-xl
-
-          p-3
-
           flex
+          w-full
           flex-col
-
           gap-3
+          rounded-2xl
+          border
+          border-[#e7d5b8]
+          bg-white
+          p-3
+          shadow-sm
         "
       >
-
 
         {/* =========================================== */}
         {/* CONTROLO DE QUANTIDADE */}
@@ -379,73 +353,56 @@ export default function Catalogo({
           <div
             className="
               flex
-
+              h-12
+              w-full
               items-center
               justify-between
-
-              bg-black/40
-
+              rounded-xl
               border
-              border-white/5
-
-              rounded-lg
-
+              border-[#e7d5b8]
+              bg-[#fff8e8]
               p-1
-
-              w-full
-
-              h-11
             "
           >
-
 
             {/* DIMINUIR */}
 
             <button
               type="button"
-
+              aria-label="Diminuir quantidade"
               onClick={() =>
                 decrementarProduto(
                   produtoIdFixo,
                   medidorAtivo.equivaleA
                 )
               }
-
               className="
-                w-11
-
-                h-full
-
-                hover:bg-white/5
-
-                rounded
-
-                text-gray-400
-
-                hover:text-white
-
                 flex
-
+                h-full
+                w-11
                 items-center
                 justify-center
-
+                rounded-lg
+                text-[#166534]
                 transition-all
+                hover:bg-[#dcfce7]
+                active:scale-95
               "
             >
 
-              <Minus className="w-4 h-4" />
+              <Minus
+                className="h-5 w-5"
+                strokeWidth={2.5}
+              />
 
             </button>
-
 
             {/* QUANTIDADE */}
 
             <div
               className="
                 flex
-
                 flex-col
-
                 items-center
                 justify-center
               "
@@ -454,128 +411,106 @@ export default function Catalogo({
               <span
                 className="
                   text-base
-
                   font-black
-
-                  text-amber-400
+                  text-[#166534]
                 "
               >
-
                 {qtdTotal} un.
-
               </span>
-
 
               <span
                 className="
-                  text-[9px]
-
-                  text-gray-500
+                  text-[10px]
+                  font-semibold
+                  text-[#78716c]
                 "
               >
-
                 {(qtdTotal * 0.5).toFixed(1)} KG
-
               </span>
 
-
             </div>
-
 
             {/* AUMENTAR */}
 
             <button
               type="button"
-
+              aria-label="Aumentar quantidade"
               onClick={() =>
                 incrementarProduto(
                   produtoIdFixo,
                   medidorAtivo.equivaleA
                 )
               }
-
               className="
-                w-11
-
-                h-full
-
-                hover:bg-white/5
-
-                rounded
-
-                text-gray-400
-
-                hover:text-amber-500
-
                 flex
-
+                h-full
+                w-11
                 items-center
                 justify-center
-
+                rounded-lg
+                bg-[#166534]
+                text-white
                 transition-all
+                hover:bg-[#14532d]
+                active:scale-95
               "
             >
 
-              <Plus className="w-4 h-4" />
+              <Plus
+                className="h-5 w-5"
+                strokeWidth={2.5}
+              />
 
             </button>
-
 
           </div>
 
         ) : (
 
+          /* ========================================= */
+          /* BOTÃO ADICIONAR */
+          /* ========================================= */
+
           <button
             type="button"
-
             onClick={() =>
               incrementarProduto(
                 produtoIdFixo,
                 medidorAtivo.equivaleA
               )
             }
-
             className="
-              w-full
-
-              h-11
-
-              bg-[#222]
-
-              border
-              border-white/5
-
-              rounded-lg
-
-              text-gray-300
-
-              hover:text-amber-500
-
-              hover:bg-[#2a2a2a]
-
-              transition-all
-
               flex
-
+              h-12
+              w-full
               items-center
               justify-center
-
               gap-2
-
-              text-xs
-
+              rounded-xl
+              border
+              border-[#166534]
+              bg-[#166534]
+              text-sm
               font-bold
+              text-white
+              shadow-sm
+              transition-all
+              hover:bg-[#14532d]
+              hover:shadow-md
+              active:scale-[0.98]
             "
           >
 
-            <ShoppingCart className="w-4 h-4" />
+            <ShoppingCart
+              className="h-5 w-5"
+              strokeWidth={2.5}
+            />
 
-            Adicionar
+            Adicionar à carrinha
 
           </button>
 
         )}
-
 
         {/* =========================================== */}
         {/* CARGA REAL */}
@@ -585,94 +520,64 @@ export default function Catalogo({
 
           <div
             className="
-              w-full
-
-              bg-black/30
-
-              border
-              border-white/5
-
-              rounded-lg
-
-              p-2
-
               flex
+              w-full
               flex-col
-
               gap-2
+              rounded-xl
+              border
+              border-[#e7d5b8]
+              bg-[#fff8e8]
+              p-2
             "
           >
-
 
             {/* CABEÇALHO */}
 
             <div
               className="
-                w-full
-
                 flex
-
+                w-full
                 items-center
                 justify-between
-
-                text-[9px]
-
+                text-[10px]
                 font-black
-
-                text-gray-500
-
                 uppercase
-
                 tracking-wider
+                text-[#78716c]
               "
             >
 
               <span>
-                Carga Real
+                Carga real
               </span>
 
-
-              <span className="text-amber-500">
-
+              <span className="text-[#166534]">
                 {(qtdTotal * 0.5).toFixed(1)} KG
-
               </span>
-
 
             </div>
-
 
             {/* VISUALIZAÇÃO */}
 
             <div
               className="
-                w-full
-
                 flex
-
+                min-h-[64px]
+                max-h-[140px]
+                w-full
                 flex-wrap
-
-                gap-2
-
                 items-center
                 justify-start
-
-                p-2
-
-                bg-black/20
-
-                rounded
-
-                min-h-[64px]
-
-                max-h-[140px]
-
+                gap-2
                 overflow-y-auto
-
-                scrollbar-none
+                rounded-lg
+                border
+                border-[#e7d5b8]
+                bg-white
+                p-2
               "
             >
-
 
               {/* BALDES GRANDES */}
 
@@ -683,17 +588,12 @@ export default function Catalogo({
 
                 <div
                   key={`bg-${i}`}
-
                   className="
                     relative
-
-                    w-9
                     h-9
-
+                    w-9
                     shrink-0
-
                     transition-transform
-
                     hover:scale-105
                   "
                 >
@@ -702,13 +602,13 @@ export default function Catalogo({
                     src="/baldegrande.png"
                     alt="Balde grande"
                     fill
+                    sizes="36px"
                     className="object-contain"
                   />
 
                 </div>
 
               ))}
-
 
               {/* BALDES MÉDIOS */}
 
@@ -719,17 +619,12 @@ export default function Catalogo({
 
                 <div
                   key={`bm-${i}`}
-
                   className="
                     relative
-
-                    w-8
                     h-8
-
+                    w-8
                     shrink-0
-
                     transition-transform
-
                     hover:scale-105
                   "
                 >
@@ -738,13 +633,13 @@ export default function Catalogo({
                     src="/baldemedio.png"
                     alt="Balde médio"
                     fill
+                    sizes="32px"
                     className="object-contain"
                   />
 
                 </div>
 
               ))}
-
 
               {/* COPOS */}
 
@@ -755,17 +650,12 @@ export default function Catalogo({
 
                 <div
                   key={`cp-${i}`}
-
                   className="
                     relative
-
-                    w-6
                     h-6
-
+                    w-6
                     shrink-0
-
                     transition-transform
-
                     hover:scale-105
                   "
                 >
@@ -774,6 +664,7 @@ export default function Catalogo({
                     src="/copo.png"
                     alt="Copo"
                     fill
+                    sizes="24px"
                     className="object-contain"
                   />
 
@@ -781,20 +672,15 @@ export default function Catalogo({
 
               ))}
 
-
             </div>
-
 
           </div>
 
         )}
 
-
       </div>
-
 
     </div>
 
   )
-
 }

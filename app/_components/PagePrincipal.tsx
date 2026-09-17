@@ -1,3 +1,4 @@
+
 'use client'
 
 import { useState } from 'react'
@@ -5,24 +6,182 @@ import {
   ShoppingCart,
   ArrowRight,
 } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 import Banner from './Banner'
 import Catalogo from './Catalogo'
 import Carrinho from './Carrinho'
 import MapaEntrega from './MapaEntrega'
 import { AuthProvider } from '../AuthContext'
+import RegistoPerfis from './RegistoPerfis'
+
+// ============================================================
+// BOTÃO DE CASTANHAS NÃO PROCESSADAS
+// ============================================================
+
+function BotaoGrandesVolumes() {
+  const router = useRouter()
+
+  const abrirPaginaGrandesVolumes = () => {
+    router.push('/grandes-volumes')
+  }
+
+  return (
+    <div className="w-full shrink-0">
+      <button
+        type="button"
+        onClick={abrirPaginaGrandesVolumes}
+        className="
+          group
+          w-full
+          cursor-pointer
+          rounded-2xl
+          border-2
+          border-[#e7d5b8]
+          bg-white
+          px-3
+          py-3
+          text-left
+          shadow-sm
+          transition-all
+          duration-300
+          hover:border-[#86a873]
+          hover:bg-[#f0fdf4]
+          hover:shadow-md
+          active:scale-[0.98]
+        "
+      >
+        <div
+          className="
+            flex
+            items-center
+            justify-between
+            gap-3
+          "
+        >
+          {/* ==================================================
+              ÍCONE + TEXTO
+          ================================================== */}
+
+          <div
+            className="
+              flex
+              min-w-0
+              items-center
+              gap-3
+            "
+          >
+            {/* ÍCONE */}
+
+            <div
+              className="
+                flex
+                h-11
+                w-11
+                shrink-0
+                items-center
+                justify-center
+                rounded-xl
+                bg-[#166534]
+                text-white
+                shadow-sm
+                transition-all
+                duration-300
+                group-hover:bg-[#14532d]
+                group-hover:shadow-md
+              "
+            >
+              <ShoppingCart
+                size={20}
+                strokeWidth={2.5}
+              />
+            </div>
+
+            {/* TEXTO */}
+
+            <div className="min-w-0">
+              <div
+                className="
+                  text-sm
+                  font-extrabold
+                  leading-tight
+                  text-[#422006]
+                "
+              >
+                Castanhas não processadas
+              </div>
+
+              <div
+                className="
+                  mt-1
+                  text-[11px]
+                  font-medium
+                  leading-tight
+                  text-[#78716c]
+                "
+              >
+                Compre em grandes volumes diretamente
+              </div>
+            </div>
+          </div>
+
+          {/* ==================================================
+              SETA
+          ================================================== */}
+
+          <div
+            className="
+              flex
+              h-9
+              w-9
+              shrink-0
+              items-center
+              justify-center
+              rounded-full
+              bg-[#dcfce7]
+              text-[#166534]
+              transition-all
+              duration-300
+              group-hover:translate-x-1
+              group-hover:bg-[#166534]
+              group-hover:text-white
+            "
+          >
+            <ArrowRight
+              size={18}
+              strokeWidth={2.5}
+            />
+          </div>
+        </div>
+      </button>
+    </div>
+  )
+}
+
+// ============================================================
+// COMPONENTE PRINCIPAL
+// ============================================================
 
 export default function LojaCastanhasEcraUnico() {
-  const [itensCarrinho, setItensCarrinho] = useState<
-    { produtoId: string; quantidade: number }[]
+  const [
+    itensCarrinho,
+    setItensCarrinho,
+  ] = useState<
+    {
+      produtoId: string
+      quantidade: number
+    }[]
   >([])
 
-  const [medidorSelecionado, setMedidorSelecionado] = useState<
+  const [
+    medidorSelecionado,
+    setMedidorSelecionado,
+  ] = useState<
     'copo' | 'balde-medio' | 'balde-grande'
   >('copo')
 
   // ============================================================
-  // QUANTIDADE DO PRODUTO
+  // OBTER QUANTIDADE
   // ============================================================
 
   const obterQuantidade = (id: string) => {
@@ -123,33 +282,37 @@ export default function LojaCastanhasEcraUnico() {
   }
 
   // ============================================================
-  // VERIFICAR SE EXISTEM PRODUTOS
+  // VERIFICAR PRODUTOS
   // ============================================================
 
   const temProdutos = itensCarrinho.some(
     item => item.quantidade > 0
   )
 
+  // ============================================================
+  // RENDERIZAÇÃO
+  // ============================================================
+
   return (
     <AuthProvider>
       <main
         className="
           relative
-          w-full
-          min-h-screen
-          lg:h-screen
-          bg-[#111111]
-          text-white
-          p-3
-          md:p-4
-          pt-2
-          md:pt-2
-          pb-24
           flex
+          min-h-screen
+          w-full
           flex-col
           overflow-y-auto
-          lg:overflow-hidden
+          bg-[#fff8e8]
+          p-3
+          pb-24
+          pt-2
+          text-[#422006]
           select-none
+          md:p-4
+          md:pt-2
+          lg:h-screen
+          lg:overflow-hidden
         "
       >
         {/* ======================================================
@@ -159,10 +322,10 @@ export default function LojaCastanhasEcraUnico() {
         <div
           className="
             relative
-            flex-1
+            mt-0
             min-h-0
             w-full
-            mt-0
+            flex-1
             lg:overflow-hidden
           "
         >
@@ -172,38 +335,38 @@ export default function LojaCastanhasEcraUnico() {
 
           <div
             className="
-              lg:pr-[calc(33.333%-0.25rem)]
               flex
-              flex-col
-              min-h-0
-              lg:overflow-hidden
-              space-y-4
-              w-full
               h-full
+              min-h-0
+              w-full
+              flex-col
+              space-y-4
+              lg:overflow-hidden
+              lg:pr-[calc(33.333%-0.25rem)]
             "
           >
             {/* ==================================================
                 BANNER
-            =================================================== */}
+            ================================================== */}
 
-            <div className="hidden md:block shrink-0">
+            <div className="hidden shrink-0 md:block">
               <Banner />
             </div>
 
             {/* ==================================================
                 MAPA + CATÁLOGO
-            =================================================== */}
+            ================================================== */}
 
             <div
               className="
-                w-full
                 flex
+                min-h-0
+                w-full
+                flex-1
                 flex-col
-                sm:flex-row
                 items-start
                 gap-4
-                flex-1
-                min-h-0
+                sm:flex-row
               "
             >
               {/* =================================================
@@ -212,10 +375,10 @@ export default function LojaCastanhasEcraUnico() {
 
               <div
                 className="
-                  w-full
-                  flex-1
-                  min-w-0
                   min-h-0
+                  w-full
+                  min-w-0
+                  flex-1
                 "
               >
                 <MapaEntrega
@@ -225,16 +388,23 @@ export default function LojaCastanhasEcraUnico() {
               </div>
 
               {/* =================================================
-                  CATÁLOGO
+                  CATÁLOGO + BOTÃO
               ================================================= */}
 
               <div
                 className="
-                  shrink-0
+                  flex
                   w-full
+                  shrink-0
+                  flex-col
+                  gap-3
                   sm:max-w-[280px]
                 "
               >
+                {/* =================================================
+                    CATÁLOGO
+                ================================================= */}
+
                 <Catalogo
                   obterQuantidade={obterQuantidade}
                   incrementarProduto={incrementarProduto}
@@ -244,6 +414,14 @@ export default function LojaCastanhasEcraUnico() {
                     setMedidorSelecionado
                   }
                 />
+
+                {/* =================================================
+                    BOTÃO QUANDO NÃO EXISTEM PRODUTOS
+                ================================================= */}
+
+                {!temProdutos && (
+                  <BotaoGrandesVolumes />
+                )}
               </div>
             </div>
           </div>
@@ -251,37 +429,34 @@ export default function LojaCastanhasEcraUnico() {
 
         {/* ======================================================
             CARRINHO + BOTÃO
-            NO CELULAR: UM DEPOIS DO OUTRO
-            NO COMPUTADOR: COLUNA FIXA À DIREITA
+            QUANDO EXISTEM PRODUTOS
         ======================================================= */}
 
-        <div
-          className="
-            w-full
-            mt-4
-            flex
-            flex-col
-            gap-4
+        {temProdutos && (
+          <div
+            className="
+              mt-4
+              flex
+              w-full
+              flex-col
+              gap-4
+              lg:fixed
+              lg:right-4
+              lg:top-4
+              lg:z-50
+              lg:max-h-[calc(100vh-2rem)]
+              lg:w-[calc(33.333vw-2rem)]
+              lg:max-w-[520px]
+            "
+          >
+            {/* ==================================================
+                CARRINHO
+            ================================================== */}
 
-            lg:fixed
-            lg:z-50
-            lg:top-4
-            lg:right-4
-            lg:bottom-auto
-            lg:w-[calc(33.333vw-2rem)]
-            lg:max-w-[520px]
-            lg:max-h-[calc(100vh-2rem)]
-          "
-        >
-          {/* ====================================================
-              CARRINHO
-          ===================================================== */}
-
-          {temProdutos && (
             <div
               className="
-                w-full
                 min-h-0
+                w-full
                 lg:max-h-[calc(100vh-190px)]
                 lg:overflow-y-auto
                 lg:pr-1
@@ -294,151 +469,20 @@ export default function LojaCastanhasEcraUnico() {
                 aoResetarCatalogo={aoResetarCatalogo}
               />
             </div>
-          )}
 
-          {/* ====================================================
-              CASTANHAS NÃO PROCESSADAS
-              FICA SEMPRE DEPOIS DA CARRINHA
-          ===================================================== */}
+            {/* ==================================================
+                BOTÃO DEPOIS DO CARRINHO
+            ================================================== */}
 
-          <div
-            className="
-              w-full
-              shrink-0
-            "
-          >
-            <button
-              type="button"
-              onClick={() => {
-                window.location.href = '/grandes-volumes'
-              }}
-              className="
-                group
-                w-full
-                rounded-xl
-                border
-                border-emerald-500/30
-                bg-emerald-500/10
-                px-4
-                py-3
-                text-left
-                cursor-pointer
-                transition-all
-                duration-300
-                hover:border-emerald-400/50
-                hover:bg-emerald-500/20
-                hover:shadow-lg
-                hover:shadow-emerald-500/10
-                active:scale-[0.99]
-              "
-            >
-              <div
-                className="
-                  flex
-                  items-center
-                  justify-between
-                  gap-4
-                "
-              >
-                {/* =================================================
-                    TEXTO + ÍCONE
-                ================================================== */}
-
-                <div
-                  className="
-                    flex
-                    items-center
-                    gap-3
-                    min-w-0
-                  "
-                >
-                  {/* =================================================
-                      ÍCONE
-                  ================================================== */}
-
-                  <div
-                    className="
-                      shrink-0
-                      flex
-                      h-10
-                      w-10
-                      items-center
-                      justify-center
-                      rounded-full
-                      bg-emerald-500
-                      text-white
-                      shadow-lg
-                      shadow-emerald-500/20
-                      transition-transform
-                      duration-300
-                      group-hover:scale-110
-                    "
-                  >
-                    <ShoppingCart
-                      size={19}
-                      strokeWidth={2.3}
-                    />
-                  </div>
-
-                  {/* =================================================
-                      INFORMAÇÃO
-                  ================================================== */}
-
-                  <div className="min-w-0">
-                    <div
-                      className="
-                        text-sm
-                        font-bold
-                        text-white
-                        leading-tight
-                      "
-                    >
-                      Castanhas não processadas
-                    </div>
-
-                    <div
-                      className="
-                        mt-1
-                        text-xs
-                        text-white/60
-                        leading-tight
-                      "
-                    >
-                      Compre em grandes volumes diretamente
-                    </div>
-                  </div>
-                </div>
-
-                {/* =================================================
-                    SETA
-                ================================================== */}
-
-                <div
-                  className="
-                    shrink-0
-                    flex
-                    h-9
-                    w-9
-                    items-center
-                    justify-center
-                    rounded-full
-                    bg-white/10
-                    text-white
-                    transition-all
-                    duration-300
-                    group-hover:bg-emerald-500
-                    group-hover:translate-x-1
-                  "
-                >
-                  <ArrowRight
-                    size={18}
-                    strokeWidth={2.5}
-                  />
-                </div>
-              </div>
-            </button>
+            <BotaoGrandesVolumes />
           </div>
-        </div>
+        )}
+
+        {/* ======================================================
+            REGISTO DE PERFIS
+        ======================================================= */}
+
+        <RegistoPerfis />
       </main>
     </AuthProvider>
   )
