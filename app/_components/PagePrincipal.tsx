@@ -1,4 +1,3 @@
-
 'use client'
 
 import { useState } from 'react'
@@ -14,6 +13,7 @@ import Carrinho from './Carrinho'
 import MapaEntrega from './MapaEntrega'
 import { AuthProvider } from '../AuthContext'
 import RegistoPerfis from './RegistoPerfis'
+import DestaquesServicos from './DestaquesServicos'
 
 // ============================================================
 // BOTÃO DE CASTANHAS NÃO PROCESSADAS
@@ -59,9 +59,7 @@ function BotaoGrandesVolumes() {
             gap-3
           "
         >
-          {/* ==================================================
-              ÍCONE + TEXTO
-          ================================================== */}
+          {/* ÍCONE + TEXTO */}
 
           <div
             className="
@@ -125,9 +123,7 @@ function BotaoGrandesVolumes() {
             </div>
           </div>
 
-          {/* ==================================================
-              SETA
-          ================================================== */}
+          {/* SETA */}
 
           <div
             className="
@@ -315,17 +311,15 @@ export default function LojaCastanhasEcraUnico() {
           lg:overflow-hidden
         "
       >
-        {/* ======================================================
-            ZONA PRINCIPAL
-        ======================================================= */}
 
         <div
           className="
             relative
-            mt-0
+            mt-3
             min-h-0
             w-full
             flex-1
+            lg:mt-0
             lg:overflow-hidden
           "
         >
@@ -477,6 +471,12 @@ export default function LojaCastanhasEcraUnico() {
             <BotaoGrandesVolumes />
           </div>
         )}
+
+        {/* ======================================================
+            DESTAQUES DOS SERVIÇOS
+        ======================================================= */}
+
+        <DestaquesServicos />
 
         {/* ======================================================
             REGISTO DE PERFIS
