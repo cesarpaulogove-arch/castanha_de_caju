@@ -1,122 +1,81 @@
+
 'use client'
 
-import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { Navigation } from 'lucide-react'
+import {
+  Navigation,
+  RefreshCw,
+} from 'lucide-react'
 
 import {
   ENTREGADORES,
-  type Entregador
+  type Entregador,
 } from '../data/entregadores'
-
-import { encontrarEntregadorMaisProximo } from '../data/encontrarEntregador'
-
-interface Estafeta extends Entregador {
-  velocidade: number
-  ultimaAtualizacao: string
-}
-
-interface MapaEntregaProps {
-  latitudeCliente: number
-  longitudeCliente: number
-}
 
 const ComponenteMapaReal = dynamic(
   () => import('./ComponenteMapa'),
   {
     ssr: false,
+
     loading: () => (
-      <div className="flex items-center justify-center h-full text-gray-400">
-        A carregar mapa...
+      <div className="flex min-h-[180px] w-full items-center justify-center rounded-xl bg-gray-100 text-sm text-gray-500">
+        A carregar o mapa...
       </div>
-    )
-  }
+    ),
+  },
 )
 
+interface MapaEntregaProps {
+  estafetas?: Entregador[]
+  className?: string
+}
+
 export default function MapaEntrega({
-  latitudeCliente,
-  longitudeCliente
+  estafetas = ENTREGADORES,
+  className = '',
 }: MapaEntregaProps) {
 
-  const [estafetas, setEstafetas] = useState<Estafeta[]>(
-    ENTREGADORES.map((entregador) => ({
-      ...entregador,
-      velocidade: 0,
-      ultimaAtualizacao: new Date().toLocaleTimeString()
-    }))
-  )
-
   /*
-   * ENCONTRAR O ENTREGADOR MAIS PRÓXIMO DO CLIENTE
+   * IMPORTANTE:
+   *
+   * Os entregadores são independentes do cliente.
+   *
+   * O cliente NÃO precisa fornecer a sua localização
+   * para visualizar os entregadores.
+   *
+   * A posição do cliente poderá ser adicionada
+   * posteriormente para cálculo de distância/rota.
    */
-  const resultado = encontrarEntregadorMaisProximo(
-    latitudeCliente,
-    longitudeCliente
+
+  const entregadoresComLocalizacao = estafetas.filter(
+    (estafeta) =>
+      Number.isFinite(estafeta.latitude) &&
+      Number.isFinite(estafeta.longitude),
   )
-
-  console.log('CLIENTE:', latitudeCliente, longitudeCliente)
-  console.log('RESULTADO:', resultado)
-  console.log('DISTÂNCIA:', resultado?.distanciaKm)
-
-  useEffect(() => {
-
-    const escutarEventoTempoReal = (
-      dadosAtualizados: Partial<Estafeta> & { id: number }
-    ) => {
-
-      setEstafetas((listaAtual) =>
-        listaAtual.map((estafeta) =>
-          estafeta.id === dadosAtualizados.id
-            ? {
-              ...estafeta,
-              ...dadosAtualizados,
-              ultimaAtualizacao:
-                new Date().toLocaleTimeString()
-            }
-            : estafeta
-        )
-      )
-    }
-
-    /*
-     * FUTURO SOCKET:
-     *
-     * socket.on(
-     *   'entregador:localizacao',
-     *   escutarEventoTempoReal
-     * )
-     */
-
-    return () => {
-
-      /*
-       * FUTURO SOCKET:
-       *
-       * socket.off(
-       *   'entregador:localizacao',
-       *   escutarEventoTempoReal
-       * )
-       */
-
-    }
-
-  }, [])
 
   return (
-    <div>
+    <section
+      className={`w-full space-y-3 ${className}`}
+    >
 
-     <div
-  className="
-    relative
-    w-full
-    h-[180px]
-    sm:h-[300px]
-    md:h-[380px]
-    rounded-xl
-    overflow-hidden
-    border border-white/10
-  "
->
+      {/* =================================================
+          CABEÇALHO
+      ================================================= */}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+
+        {/* Quantidade de entregadores */}
+        <div className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
+          {entregadoresComLocalizacao.length}{' '}
+          {entregadoresComLocalizacao.length === 1
+            ? 'entregador'
+            : 'entregadores'}
+        </div>
+
+      </div>
+
+
+      <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
 
         <ComponenteMapaReal
           estafetas={estafetas}
@@ -124,6 +83,7 @@ export default function MapaEntrega({
 
       </div>
 
-    </div>
+    </section>
   )
 }
+
