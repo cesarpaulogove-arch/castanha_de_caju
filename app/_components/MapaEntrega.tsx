@@ -2,10 +2,6 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import {
-  Navigation,
-  RefreshCw,
-} from 'lucide-react'
 
 import {
   ENTREGADORES,
@@ -28,24 +24,16 @@ const ComponenteMapaReal = dynamic(
 interface MapaEntregaProps {
   estafetas?: Entregador[]
   className?: string
+  latitudeCliente?: number
+  longitudeCliente?: number
 }
 
 export default function MapaEntrega({
   estafetas = ENTREGADORES,
   className = '',
+  latitudeCliente,
+  longitudeCliente,
 }: MapaEntregaProps) {
-
-  /*
-   * IMPORTANTE:
-   *
-   * Os entregadores são independentes do cliente.
-   *
-   * O cliente NÃO precisa fornecer a sua localização
-   * para visualizar os entregadores.
-   *
-   * A posição do cliente poderá ser adicionada
-   * posteriormente para cálculo de distância/rota.
-   */
 
   const entregadoresComLocalizacao = estafetas.filter(
     (estafeta) =>
@@ -58,13 +46,10 @@ export default function MapaEntrega({
       className={`w-full space-y-3 ${className}`}
     >
 
-      {/* =================================================
-          CABEÇALHO
-      ================================================= */}
+      {/* CABEÇALHO */}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
 
-        {/* Quantidade de entregadores */}
         <div className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
           {entregadoresComLocalizacao.length}{' '}
           {entregadoresComLocalizacao.length === 1
@@ -74,11 +59,12 @@ export default function MapaEntrega({
 
       </div>
 
-
       <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
 
         <ComponenteMapaReal
           estafetas={estafetas}
+          latitudeCliente={latitudeCliente}
+          longitudeCliente={longitudeCliente}
         />
 
       </div>
@@ -86,4 +72,3 @@ export default function MapaEntrega({
     </section>
   )
 }
-

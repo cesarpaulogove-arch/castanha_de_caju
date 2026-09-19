@@ -32,6 +32,8 @@ interface Estafeta extends Entregador {
 
 interface ComponenteMapaProps {
   estafetas: Estafeta[]
+  latitudeCliente?: number
+  longitudeCliente?: number
 }
 
 /* =========================================================
@@ -172,10 +174,6 @@ function AtualizadorCamera({
       return
     }
 
-    /* =====================================================
-       UM ENTREGADOR
-    ===================================================== */
-
     if (pontos.length === 1) {
 
       map.setView(
@@ -190,10 +188,6 @@ function AtualizadorCamera({
 
       return
     }
-
-    /* =====================================================
-       VÁRIOS ENTREGADORES
-    ===================================================== */
 
     const bounds =
       L.latLngBounds(pontos)
@@ -272,30 +266,22 @@ function CentralizarEntregador({
 
 export default function ComponenteMapa({
   estafetas,
+  latitudeCliente,
+  longitudeCliente,
 }: ComponenteMapaProps) {
 
-  /* =======================================================
-     CENTRO INICIAL
-  ======================================================= */
+  /*
+   * As coordenadas do cliente estão disponíveis
+   * para utilização futura no mapa.
+   */
 
   const centroInicial: [
     number,
     number
   ] = [
-    -25.9653,
-    32.5892,
+    latitudeCliente ?? -25.9653,
+    longitudeCliente ?? 32.5892,
   ]
-
-  /* =======================================================
-     ENTREGADORES COM GPS VÁLIDO
-     
-     IMPORTANTE:
-     
-     NÃO usamos "online" para retirar o botão.
-     
-     Todos os entregadores com localização válida
-     permanecem selecionáveis.
-  ======================================================= */
 
   const entregadoresValidos =
     estafetas.filter(
@@ -307,10 +293,6 @@ export default function ComponenteMapa({
           estafeta.longitude
         )
     )
-
-  /* =======================================================
-     ENTREGADOR SELECIONADO
-  ======================================================= */
 
   const [
     entregadorSelecionado,
@@ -327,10 +309,6 @@ export default function ComponenteMapa({
         ]
       : null
 
-  /* =======================================================
-     ANTERIOR
-  ======================================================= */
-
   function anterior() {
 
     if (
@@ -346,10 +324,6 @@ export default function ComponenteMapa({
           : valor - 1
     )
   }
-
-  /* =======================================================
-     SEGUINTE
-  ======================================================= */
 
   function seguinte() {
 
@@ -368,10 +342,6 @@ export default function ComponenteMapa({
     )
   }
 
-  /* =======================================================
-     SELECIONAR
-  ======================================================= */
-
   function selecionarEntregador(
     index: number
   ) {
@@ -382,10 +352,6 @@ export default function ComponenteMapa({
 
   }
 
-  /* =======================================================
-     RENDER
-  ======================================================= */
-
   return (
     <div className="w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
 
@@ -393,40 +359,22 @@ export default function ComponenteMapa({
         {estilosMapa}
       </style>
 
-      {/* =================================================
-          MAPA
-      ================================================= */}
-
       <div className="relative w-full">
 
         <MapContainer
           center={centroInicial}
           zoom={13}
-
           scrollWheelZoom={true}
           zoomControl={true}
           dragging={true}
           doubleClickZoom={true}
           touchZoom={true}
-
-          /*
-           * MAPA REDUZIDO
-           *
-           * Mobile: 200px
-           * Desktop: 240px
-           */
-
           className="h-[200px] w-full sm:h-[240px]"
-
           style={{
             width: '100%',
             height: '240px',
           }}
         >
-
-          {/* =================================================
-              OPENSTREETMAP
-          ================================================= */}
 
           <TileLayer
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -434,25 +382,13 @@ export default function ComponenteMapa({
             maxZoom={19}
           />
 
-          {/* =================================================
-              CÂMERA INICIAL
-          ================================================= */}
-
           <AtualizadorCamera
             estafetas={estafetas}
           />
 
-          {/* =================================================
-              ACOMPANHAR ENTREGADOR
-          ================================================= */}
-
           <CentralizarEntregador
             entregador={entregadorAtual}
           />
-
-          {/* =================================================
-              MARCADORES DOS ENTREGADORES
-          ================================================= */}
 
           {entregadoresValidos.map(
             (
@@ -470,24 +406,17 @@ export default function ComponenteMapa({
               return (
                 <Marker
                   key={estafeta.id}
-
                   position={[
                     estafeta.latitude,
                     estafeta.longitude,
                   ]}
-
                   icon={iconeEstafeta}
-
                   zIndexOffset={
                     selecionado
                       ? 1000
                       : 0
                   }
                 >
-
-                  {/* =================================================
-                      NOME
-                  ================================================= */}
 
                   <Tooltip
                     permanent
@@ -504,10 +433,6 @@ export default function ComponenteMapa({
                     </strong>
 
                   </Tooltip>
-
-                  {/* =================================================
-                      POPUP
-                  ================================================= */}
 
                   <Popup>
 
@@ -530,8 +455,6 @@ export default function ComponenteMapa({
                         {estafeta.nome}
                       </div>
 
-                      {/* ESTADO */}
-
                       <div>
                         {activo ? (
                           <>
@@ -544,8 +467,6 @@ export default function ComponenteMapa({
                         )}
                       </div>
 
-                      {/* VELOCIDADE */}
-
                       <div>
                         🚴{' '}
                         {Number(
@@ -556,15 +477,11 @@ export default function ComponenteMapa({
                         {' km/h'}
                       </div>
 
-                      {/* ATUALIZAÇÃO */}
-
                       <div>
                         🕐{' '}
                         {estafeta.ultimaAtualizacao ??
                           'Agora'}
                       </div>
-
-                      {/* GPS */}
 
                       <div
                         style={{
@@ -604,10 +521,6 @@ export default function ComponenteMapa({
 
         </MapContainer>
 
-        {/* =================================================
-            INDICADOR GPS
-        ================================================= */}
-
         {entregadoresValidos.length >
           0 && (
           <div className="pointer-events-none absolute left-3 top-3 z-[1000] rounded-xl border border-gray-200 bg-white px-3 py-2 shadow-lg">
@@ -624,10 +537,6 @@ export default function ComponenteMapa({
 
           </div>
         )}
-
-        {/* =================================================
-            CONTADOR
-        ================================================= */}
 
         {entregadoresValidos.length >
           0 && (
@@ -648,17 +557,9 @@ export default function ComponenteMapa({
 
       </div>
 
-      {/* =================================================
-          BARRA DOS ENTREGADORES ACTIVOS
-      ================================================= */}
-
       {entregadoresValidos.length >
         0 && (
         <div className="w-full border-t border-gray-200 bg-white p-3">
-
-          {/* =================================================
-              CABEÇALHO DA BARRA
-          ================================================= */}
 
           <div className="mb-2 flex items-center justify-between">
 
@@ -681,13 +582,7 @@ export default function ComponenteMapa({
 
           </div>
 
-          {/* =================================================
-              BOTÕES
-          ================================================= */}
-
           <div className="flex items-center gap-2">
-
-            {/* ANTERIOR */}
 
             <button
               type="button"
@@ -696,17 +591,11 @@ export default function ComponenteMapa({
                 entregadoresValidos.length <=
                 1
               }
-
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-gray-800 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-40"
-
               aria-label="Entregador anterior"
             >
               ‹
             </button>
-
-            {/* =================================================
-                LISTA
-            ================================================= */}
 
             <div className="flex min-w-0 flex-1 items-center justify-center gap-2 overflow-x-auto">
 
@@ -727,34 +616,18 @@ export default function ComponenteMapa({
                   return (
                     <button
                       key={estafeta.id}
-
                       type="button"
-
-                      /*
-                       * IMPORTANTE:
-                       *
-                       * Não existe disabled aqui.
-                       *
-                       * Todos os entregadores
-                       * podem ser selecionados.
-                       */
-
                       onClick={() =>
                         selecionarEntregador(
                           index
                         )
                       }
-
                       className={`flex shrink-0 items-center gap-2 rounded-xl border px-2.5 py-2 transition-all ${
                         selecionado
                           ? 'border-green-600 bg-green-600 text-white shadow-md'
                           : 'border-gray-200 bg-white text-gray-700 hover:border-green-300 hover:bg-green-50'
                       }`}
                     >
-
-                      {/* =================================================
-                          ÍCONE
-                      ================================================= */}
 
                       <span
                         className={`flex h-8 w-8 items-center justify-center rounded-full text-base ${
@@ -765,10 +638,6 @@ export default function ComponenteMapa({
                       >
                         🛵
                       </span>
-
-                      {/* =================================================
-                          INFORMAÇÕES
-                      ================================================= */}
 
                       <span className="flex min-w-0 flex-col items-start">
 
@@ -811,10 +680,6 @@ export default function ComponenteMapa({
 
             </div>
 
-            {/* =================================================
-                SEGUINTE
-            ================================================= */}
-
             <button
               type="button"
               onClick={seguinte}
@@ -822,19 +687,13 @@ export default function ComponenteMapa({
                 entregadoresValidos.length <=
                 1
               }
-
               className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xl font-bold text-gray-800 transition hover:bg-green-100 disabled:cursor-not-allowed disabled:opacity-40"
-
               aria-label="Próximo entregador"
             >
               ›
             </button>
 
           </div>
-
-          {/* =================================================
-              ENTREGADOR SELECIONADO
-          ================================================= */}
 
           {entregadorAtual && (
             <div className="mt-2 flex items-center justify-center gap-2 text-[11px]">
@@ -888,4 +747,3 @@ function estafetaEstaOnline(
 ) {
   return estafeta.online === true
 }
-
