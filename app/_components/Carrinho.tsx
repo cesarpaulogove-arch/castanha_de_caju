@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+
 import {
   Tag,
   X,
@@ -22,6 +23,16 @@ interface CarrinhoProps {
   medidorSelecionado: 'copo' | 'balde-medio' | 'balde-grande'
   aoLimparCarrinho?: () => void
   aoResetarCatalogo?: () => void
+}
+
+
+interface ClienteAutenticado {
+  id: number
+  nome: string
+  telefone: string | null
+  email: string
+  localizacao: string
+  perfil: string
 }
 
 function calcularDistancia(
@@ -114,6 +125,9 @@ export default function Carrinho({
 
   const pesoTotalKg =
     totalItensCarrinho * 0.5
+
+
+    
 
   // ==============================
   // FORMATAÇÃO
