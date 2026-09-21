@@ -1,11 +1,12 @@
+import EscolhaAcessoPerfil from "@/app/components/auth/EscolhaAcessoPerfil";
 
-import FormularioRegisto from '@/app/_components/FormularioRegisto'
 
-export default function ProdutorPage() {
+export default function RegistoProdutorPage() {
   return (
-    <FormularioRegisto
+    <EscolhaAcessoPerfil
       tipo="Produtor"
-      descricao="Registe-se para vender castanhas não processadas."
+      perfil="produtor"
+      descricao="Produza e venda castanhas e outros produtos na plataforma."
     />
   )
 }

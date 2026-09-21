@@ -1,11 +1,13 @@
+import EscolhaAcessoPerfil from "@/app/components/auth/EscolhaAcessoPerfil";
 
-import FormularioRegisto from '@/app/_components/FormularioRegisto'
 
-export default function TransportadorPage() {
+export default function RegistoTransportadorPage() {
   return (
-    <FormularioRegisto
+    <EscolhaAcessoPerfil
       tipo="Transportador"
-      descricao="Registe-se para prestar serviços de transporte."
+      perfil="transportador"
+      descricao="Transporte produtos e grandes volumes entre produtores, fornecedores e clientes."
     />
   )
 }
+

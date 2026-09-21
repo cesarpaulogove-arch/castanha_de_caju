@@ -1,152 +1,203 @@
+
 'use client'
-import Image from 'next/image'
-import { Phone, Mail, MapPin, Clock, Cpu, ShieldCheck } from 'lucide-react'
+
+import {
+  Phone,
+  Mail,
+  MapPin,
+  Clock,
+  MessageCircle,
+  ShieldCheck,
+  Building2,
+} from 'lucide-react'
 
 export default function ContactosEmpresa() {
-  
-  // Função para abrir o WhatsApp oficial com a mensagem atualizada sobre robótica e castanhas
   const abrirWhatsAppSuporte = () => {
     const numeroSuporte = '258847059112'
-    const texto = encodeURIComponent('Olá! Gostaria de obter suporte comercial e técnico sobre os projetos de robótica, protótipos inteligentes e lotes de castanhas premium da SIDCode.')
-    window.open(`https://wa.me/${numeroSuporte}?text=${texto}`, '_blank')
+
+    const texto = encodeURIComponent(
+      'Olá! Gostaria de obter suporte comercial e informações sobre os produtos e serviços da Castanha de Caju.'
+    )
+
+    window.open(
+      `https://wa.me/${numeroSuporte}?text=${texto}`,
+      '_blank'
+    )
   }
 
   return (
-    <div className="w-full min-h-screen bg-[#111111] font-sans text-white p-4 flex flex-col justify-start items-center select-none overflow-y-auto relative pt-2 md:pt-4 pb-12">
-      
-      {/* 🌳 IMAGEM DE CAJOEIRO — TOPO ESQUERDO */}
-      <div className="fixed top-0 left-0 w-40 h-40 md:w-64 md:h-64 pointer-events-none select-none z-0 opacity-30 md:opacity-45">
-        <Image 
-          src="/cajoeiro_esquerdo.png" 
-          alt="Cajoeiro Esquerda" 
-          fill 
-          sizes="256px"
-          className="object-contain object-top-left scale-110" 
-          priority
-        />
-      </div>
+    <main className="min-h-screen w-full bg-[#fff8e8] px-4 py-6 font-sans text-[#382515] md:px-8 md:py-10">
+      <div className="mx-auto w-full max-w-3xl space-y-6">
 
-      {/* 🌳 IMAGEM DE CAJOEIRO — TOPO DIREITO */}
-      <div className="fixed top-0 right-0 w-40 h-40 md:w-64 md:h-64 pointer-events-none select-none z-0 opacity-30 md:opacity-45">
-        <Image 
-          src="/cajoeiro_direito.png" 
-          alt="Cajoeiro Direita" 
-          fill 
-          sizes="256px"
-          className="object-contain object-top-right scale-110" 
-          priority
-        />
-      </div>
-
-      {/* 🍂 DECORAÇÕES LATERAIS DE CASTANHAS */}
-      <div className="fixed top-[22%] -left-6 md:-left-10 w-18 h-18 md:w-28 md:h-28 opacity-20 md:opacity-30 rounded-full overflow-hidden z-0 filter drop-shadow-2xl -rotate-12">
-        <Image src="/castanha_img.jpg" alt="Caju" fill sizes="112px" className="object-cover" />
-      </div>
-      <div className="fixed top-[55%] -translate-y-1/2 -left-8 md:-left-12 w-18 h-18 md:w-28 md:h-28 opacity-20 md:opacity-30 rounded-full overflow-hidden z-0 filter drop-shadow-2xl rotate-45">
-        <Image src="/castanha_img.jpg" alt="Caju" fill sizes="112px" className="object-cover" />
-      </div>
-      <div className="fixed bottom-[10%] -left-6 md:-left-10 w-18 h-18 md:w-28 md:h-28 opacity-20 md:opacity-30 rounded-full overflow-hidden z-0 filter drop-shadow-2xl -rotate-45">
-        <Image src="/castanha_img.jpg" alt="Caju" fill sizes="112px" className="object-cover" />
-      </div>
-
-      <div className="fixed top-[22%] -right-6 md:-right-10 w-18 h-18 md:w-28 md:h-28 opacity-20 md:opacity-30 rounded-full overflow-hidden z-0 filter drop-shadow-2xl rotate-12">
-        <Image src="/castanha_img.jpg" alt="Caju" fill sizes="112px" className="object-cover" />
-      </div>
-      <div className="fixed top-[55%] -translate-y-1/2 -right-8 md:-right-12 w-18 h-18 md:w-28 md:h-28 opacity-20 md:opacity-30 rounded-full overflow-hidden z-0 filter drop-shadow-2xl -rotate-45">
-        <Image src="/castanha_img.jpg" alt="Caju" fill sizes="112px" className="object-cover" />
-      </div>
-      <div className="fixed bottom-[10%] -right-6 md:-right-10 w-18 h-18 md:w-28 md:h-28 opacity-20 md:opacity-30 rounded-full overflow-hidden z-0 filter drop-shadow-2xl rotate-12">
-        <Image src="/castanha_img.jpg" alt="Caju" fill sizes="112px" className="object-cover" />
-      </div>
-
-      {/* CARTÃO PRINCIPAL DE CONTACTOS CORPORATIVOS */}
-      <div className="w-full max-w-2xl bg-[#161616]/95 border border-white/5 backdrop-blur-md rounded-2xl p-6 shadow-2xl space-y-6 z-10 mt-1">
-        
-        {/* CABEÇALHO — Contexto Inovação Tecnológica */}
-        <div className="flex items-center gap-3 border-b border-white/5 pb-4">
-          <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-500">
-            <Cpu className="w-6 h-6 animate-pulse" />
+        {/* Cabeçalho */}
+        <header className="text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-[#166534] shadow-md">
+            <MessageCircle
+              size={28}
+              className="text-white"
+            />
           </div>
-          <div>
-            <h2 className="text-lg font-black tracking-wider uppercase text-white">Canais de Engenharia & Suporte</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Lab de Prototipagem • Automação Inteligente • Castanhas Premium</p>
-          </div>
-        </div>
 
-        {/* HORÁRIO DE ATENDIMENTO */}
-        <div className="bg-black/30 border border-white/5 rounded-xl p-4 flex items-center gap-3 text-xs md:text-sm text-gray-300">
-          <Clock className="w-5 h-5 text-emerald-400 shrink-0" />
-          <div>
-            <p className="font-black text-white uppercase tracking-wider text-[11px]">Horário de Operação e Engenharia:</p>
-            <p className="text-gray-400 mt-0.5">Segunda a Sexta: 08:00h às 18:00h • Sábados (Ajuste de Hardware): 08:00h às 13:00h</p>
-          </div>
-        </div>
+          <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">
+            Contactos
+          </h1>
 
-        {/* LISTA DE CONTACTOS DIRETOS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
-          {/* Linha de Apoio Técnico e Comercial via WhatsApp */}
-          <div className="bg-black/20 border border-white/5 rounded-xl p-4 space-y-2">
-            <div className="flex items-center gap-2 text-amber-500 font-black text-xs uppercase tracking-wider">
-              <Phone className="w-4 h-4" /> Linha de Engenharia
+          <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-[#806b55]">
+            Entre em contacto connosco. Estamos disponíveis
+            para esclarecer dúvidas e apoiar as suas necessidades.
+          </p>
+        </header>
+
+        {/* Cartão principal */}
+        <section className="space-y-6 rounded-3xl border border-[#e7d5b8] bg-white p-5 shadow-[0_15px_45px_rgba(92,64,32,0.08)] sm:p-8">
+
+          {/* Título */}
+          <div className="flex items-center gap-3 border-b border-[#f0e5d5] pb-5">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-green-50 text-[#166534]">
+              <Building2 size={23} />
             </div>
-            <p className="text-lg font-black text-white tracking-wide">+258864018233</p>
-            <p className="text-[11px] text-gray-500 font-medium">Suporte e atendimento via WhatsApp para integração de hardware.</p>
-          </div>
 
-          {/* Departamento Corporativo por E-mail */}
-          <div className="bg-black/20 border border-white/5 rounded-xl p-4 space-y-2">
-            <div className="flex items-center gap-2 text-amber-500 font-black text-xs uppercase tracking-wider">
-              <Mail className="w-4 h-4" /> Depart. Tecnológico
-            </div>
-            <p className="text-sm font-black text-white truncate tracking-tight">castanhasaninha@gmail.com</p>
-            <p className="text-[11px] text-gray-500 font-medium">Propostas formais de prototipagem e parcerias em larga escala.</p>
-          </div>
+            <div>
+              <h2 className="text-lg font-extrabold text-[#382515]">
+                Canais de Atendimento
+              </h2>
 
-        </div>
-
-        {/* INFRAESTRUTURA E LOCAIS DE DESPACHO */}
-        <div className="bg-black/20 border border-white/5 rounded-xl p-4 space-y-3.5">
-          <div className="flex items-center gap-2 text-amber-500 font-black text-xs uppercase tracking-wider border-b border-white/5 pb-2">
-            <MapPin className="w-4 h-4" /> Ecossistema Operacional
-          </div>
-          
-          <div className="space-y-3 text-xs md:text-sm">
-            <div className="flex items-start gap-2.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-             <p className="text-gray-300">
-  <span className="text-white font-black block">Escritório Central & Ponto de Distribuição:</span>
-  Bairro de Malhampsene Q2, Av. Samora Machel • Matola, Moçambique
-</p>
-
-            </div>
-            <div className="flex items-start gap-2.5">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 mt-1.5 shrink-0" />
-              <p className="text-gray-300">
-                <span className="text-white font-black block">Hub de Logística Sul & Lab de Prototipagem:</span>
-                Zonas Integradas de Maputo & Cidade da Matola
+              <p className="mt-1 text-xs text-[#806b55]">
+                Atendimento comercial e suporte ao cliente
               </p>
             </div>
           </div>
-        </div>
 
-        {/* BOTÃO PREMIUM: DISPARAR WHATSAPP IMEDIATO */}
-        <button 
-          onClick={abrirWhatsAppSuporte}
-          className="w-full py-3.5 bg-[#009966] hover:bg-[#008055] text-white font-black rounded-xl text-xs md:text-sm uppercase tracking-wider transition-colors shadow-lg shadow-emerald-900/10 flex items-center justify-center gap-2"
-        >
-          💬 Abrir Conversa Direta no WhatsApp
-        </button>
+          {/* Horário de atendimento */}
+          <div className="flex items-start gap-3 rounded-2xl border border-[#e7d5b8] bg-[#fffdf8] p-4">
+            <Clock
+              size={21}
+              className="mt-0.5 shrink-0 text-[#166534]"
+            />
 
-        {/* CRUNCH INFRAESTRUTURA DE SEGURANÇA */}
-        <div className="bg-amber-500/5 border border-amber-500/10 rounded-xl p-3 flex items-center gap-2.5 text-xs text-gray-400">
-          <ShieldCheck className="w-4 h-4 text-amber-500 shrink-0" />
-          <p className="text-[10px] md:text-[11px] leading-snug">
-            Todas as comunicações estabelecidas com os terminais da SIDCode cumprem os critérios de confidencialidade de engenharia de hardware e processamento de encomendas.
-          </p>
-        </div>
+            <div>
+              <h3 className="text-xs font-extrabold uppercase tracking-wide text-[#382515]">
+                Horário de Atendimento
+              </h3>
+
+              <p className="mt-1 text-sm leading-6 text-[#806b55]">
+                Segunda a sexta-feira: 08:00h às 18:00h
+                <br />
+                Sábados: 08:00h às 13:00h
+              </p>
+            </div>
+          </div>
+
+          {/* Contactos diretos */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+
+            {/* Telefone */}
+            <div className="rounded-2xl border border-[#e7d5b8] bg-[#fffdf8] p-5">
+              <div className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-[#166534]">
+                <Phone size={18} />
+                Telefone
+              </div>
+
+              <p className="text-lg font-extrabold tracking-wide text-[#382515]">
+                +258 864 018 233
+              </p>
+
+              <p className="mt-2 text-xs leading-5 text-[#806b55]">
+                Contacto para informações e atendimento.
+              </p>
+            </div>
+
+            {/* Email */}
+            <div className="rounded-2xl border border-[#e7d5b8] bg-[#fffdf8] p-5">
+              <div className="mb-3 flex items-center gap-2 text-xs font-extrabold uppercase tracking-wide text-[#166534]">
+                <Mail size={18} />
+                Email
+              </div>
+
+              <p className="break-all text-sm font-extrabold text-[#382515]">
+                castanhasaninha@gmail.com
+              </p>
+
+              <p className="mt-2 text-xs leading-5 text-[#806b55]">
+                Contacto para propostas e comunicações formais.
+              </p>
+            </div>
+
+          </div>
+
+          {/* Localização */}
+          <div className="rounded-2xl border border-[#e7d5b8] bg-[#fffdf8] p-5">
+            <div className="mb-4 flex items-center gap-2 border-b border-[#f0e5d5] pb-3 text-xs font-extrabold uppercase tracking-wide text-[#166534]">
+              <MapPin size={18} />
+              Localização
+            </div>
+
+            <div className="space-y-4">
+
+              <div className="flex items-start gap-3">
+                <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#166534]" />
+
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#382515]">
+                    Escritório Central e Ponto de Distribuição
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-6 text-[#806b55]">
+                    Bairro de Malhampsene Q2, Avenida Samora
+                    Machel, Matola, Moçambique.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-[#166534]" />
+
+                <div>
+                  <h3 className="text-sm font-extrabold text-[#382515]">
+                    Operações e Distribuição
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-6 text-[#806b55]">
+                    Zonas integradas de Maputo e Cidade da Matola.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          {/* WhatsApp */}
+          <button
+            onClick={abrirWhatsAppSuporte}
+            className="flex w-full items-center justify-center gap-3 rounded-xl bg-[#166534] px-5 py-4 text-sm font-extrabold text-white shadow-lg shadow-green-900/10 transition hover:bg-[#14532d]"
+          >
+            <MessageCircle size={20} />
+            Conversar pelo WhatsApp
+          </button>
+
+          {/* Confidencialidade */}
+          <div className="flex items-start gap-3 rounded-2xl border border-green-100 bg-green-50 p-4">
+            <ShieldCheck
+              size={20}
+              className="mt-0.5 shrink-0 text-[#166534]"
+            />
+
+            <p className="text-xs leading-5 text-green-800">
+              Valorizamos a confiança, a transparência e o
+              respeito em todas as comunicações com os nossos
+              clientes e parceiros.
+            </p>
+          </div>
+
+        </section>
+
+        {/* Rodapé */}
+        <footer className="pb-4 text-center text-xs text-[#a58b6d]">
+          © {new Date().getFullYear()} Castanha de Caju.
+          Todos os direitos reservados.
+        </footer>
 
       </div>
-    </div>
+    </main>
   )
 }

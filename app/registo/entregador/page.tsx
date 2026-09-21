@@ -1,11 +1,13 @@
+import EscolhaAcessoPerfil from "@/app/components/auth/EscolhaAcessoPerfil";
 
-import FormularioRegisto from '@/app/_components/FormularioRegisto'
 
-export default function EntregadorPage() {
+export default function RegistoEntregadorPage() {
   return (
-    <FormularioRegisto
+    <EscolhaAcessoPerfil
       tipo="Entregador"
-      descricao="Registe-se para realizar entregas aos clientes."
+      perfil="entregador"
+      descricao="Faça entregas de produtos aos clientes da plataforma."
     />
   )
 }
+

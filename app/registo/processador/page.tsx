@@ -1,11 +1,13 @@
+import EscolhaAcessoPerfil from "@/app/components/auth/EscolhaAcessoPerfil";
 
-import FormularioRegisto from '@/app/_components/FormularioRegisto'
 
-export default function ProcessadorPage() {
+export default function RegistoProcessadorPage() {
   return (
-    <FormularioRegisto
+    <EscolhaAcessoPerfil
       tipo="Processador"
-      descricao="Registe-se para comercializar castanhas processadas."
+      perfil="processador"
+      descricao="Transforme castanhas em produtos processados e comercializáveis."
     />
   )
 }
+

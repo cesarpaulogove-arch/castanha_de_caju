@@ -1,0 +1,230 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Perfil {
+  GESTOR
+  PRODUTOR
+  CLIENTE
+  ENTREGADOR
+  FORNECEDOR
+  PROCESSADOR
+  TRANSPORTADOR
+}
+
+enum TipoSessao {
+  UTILIZADOR
+  GESTOR
+}
+
+enum EstadoOperacao {
+  PENDENTE
+  CONFIRMADO
+  REJEITADO
+}
+
+enum TipoMovimentoStock {
+  ENTRADA_PRODUCAO
+  ENTRADA_FORNECIMENTO
+  ENTRADA_PROCESSAMENTO
+  SAIDA
+  AJUSTE
+}
+
+model Usuario {
+  id          Int      @id @default(autoincrement())
+  nome        String
+  email       String   @unique
+  telefone    String?
+  localizacao String
+  senha       String
+  perfil      Perfil
+  ativo       Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sessoes        Sessao[]
+  producoes      Producao[]
+  fornecimentos  Fornecimento[]
+  processamentos Processamento[]
+
+  @@index([perfil])
+}
+
+model Sessao {
+  id        String     @id @default(cuid())
+  tokenHash String     @unique
+  usuarioId Int?
+  tipo      TipoSessao @default(UTILIZADOR)
+  expiraEm  DateTime
+  createdAt DateTime   @default(now())
+
+  usuario Usuario? @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([expiraEm])
+  @@index([tipo])
+}
+
+model Produto {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  descricao String?
+  unidade   String   @default("kg")
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  producoes       Producao[]
+  fornecimentos   Fornecimento[]
+  processamentos  Processamento[]
+  stock           Stock?
+  movimentosStock MovimentoStock[]
+
+  @@index([nome])
+  @@index([ativo])
+}
+
+model Producao {
+  id         Int    @id @default(autoincrement())
+  produtorId Int
+  produtoId  Int
+  lote       String @unique
+
+  quantidade           Decimal @db.Decimal(12, 3)
+  quantidadeDisponivel Decimal @db.Decimal(12, 3)
+
+  dataProducao DateTime @default(now())
+
+  estado       EstadoOperacao @default(PENDENTE)
+  confirmadoEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  produtor Usuario @relation(fields: [produtorId], references: [id], onDelete: Restrict)
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  movimentosStock MovimentoStock[]
+
+  @@index([produtorId])
+  @@index([produtoId])
+  @@index([produtorId, dataProducao])
+  @@index([lote])
+  @@index([estado])
+}
+
+model Fornecimento {
+  id           Int    @id @default(autoincrement())
+  fornecedorId Int
+  produtoId    Int
+  lote         String @unique
+
+  quantidade           Decimal @db.Decimal(12, 3)
+  quantidadeDisponivel Decimal @db.Decimal(12, 3)
+
+  dataFornecimento DateTime @default(now())
+
+  estado       EstadoOperacao @default(PENDENTE)
+  confirmadoEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  fornecedor Usuario @relation(fields: [fornecedorId], references: [id], onDelete: Restrict)
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  movimentosStock MovimentoStock[]
+
+  @@index([fornecedorId])
+  @@index([produtoId])
+  @@index([fornecedorId, dataFornecimento])
+  @@index([lote])
+  @@index([estado])
+}
+
+model Processamento {
+  id            Int    @id @default(autoincrement())
+  processadorId Int
+  produtoId     Int
+  lote          String @unique
+
+  quantidade           Decimal @db.Decimal(12, 3)
+  quantidadeDisponivel Decimal @db.Decimal(12, 3)
+
+  dataProcessamento DateTime @default(now())
+
+  estado       EstadoOperacao @default(PENDENTE)
+  confirmadoEm DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  processador Usuario @relation(fields: [processadorId], references: [id], onDelete: Restrict)
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  movimentosStock MovimentoStock[]
+
+  @@index([processadorId])
+  @@index([produtoId])
+  @@index([processadorId, dataProcessamento])
+  @@index([lote])
+  @@index([estado])
+}
+
+model Stock {
+  id Int @id @default(autoincrement())
+
+  produtoId Int @unique
+
+  quantidade Decimal @default(0) @db.Decimal(12, 3)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+}
+
+model MovimentoStock {
+  id Int @id @default(autoincrement())
+
+  produtoId Int
+
+  quantidade Decimal @db.Decimal(12, 3)
+
+  quantidadeAntes  Decimal @db.Decimal(12, 3)
+  quantidadeDepois Decimal @db.Decimal(12, 3)
+
+  tipo TipoMovimentoStock
+
+  producaoId      Int?
+  fornecimentoId  Int?
+  processamentoId Int?
+
+  gestorEmail String?
+
+  descricao String?
+
+  createdAt DateTime @default(now())
+
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  producao Producao? @relation(fields: [producaoId], references: [id], onDelete: Restrict)
+
+  fornecimento Fornecimento? @relation(fields: [fornecimentoId], references: [id], onDelete: Restrict)
+
+  processamento Processamento? @relation(fields: [processamentoId], references: [id], onDelete: Restrict)
+
+  @@index([produtoId, createdAt])
+  @@index([producaoId])
+  @@index([fornecimentoId])
+  @@index([processamentoId])
+}

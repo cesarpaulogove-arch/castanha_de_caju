@@ -1,11 +1,13 @@
+import EscolhaAcessoPerfil from "@/app/components/auth/EscolhaAcessoPerfil";
 
-import FormularioRegisto from '@/app/_components/FormularioRegisto'
 
-export default function FornecedorPage() {
+export default function RegistoFornecedorPage() {
   return (
-    <FormularioRegisto
+    <EscolhaAcessoPerfil
       tipo="Fornecedor"
-      descricao="Registe-se para fornecer produtos ou materiais."
+      perfil="fornecedor"
+      descricao="Forneça produtos, materiais e recursos para os participantes da plataforma."
     />
   )
 }
+

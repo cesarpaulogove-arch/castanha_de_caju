@@ -1,4 +1,3 @@
-
 'use client'
 
 import {
@@ -13,10 +12,6 @@ import {
 
 import { useRouter } from 'next/navigation'
 
-// ============================================================
-// TIPOS
-// ============================================================
-
 interface PerfilRegisto {
   id: string
   nome: string
@@ -24,10 +19,6 @@ interface PerfilRegisto {
   icon: LucideIcon
   link: string
 }
-
-// ============================================================
-// PERFIS DISPONÍVEIS
-// ============================================================
 
 const PERFIS: PerfilRegisto[] = [
   {
@@ -74,10 +65,6 @@ const PERFIS: PerfilRegisto[] = [
   },
 ]
 
-// ============================================================
-// COMPONENTE PRINCIPAL
-// ============================================================
-
 export default function RegistoPerfis() {
   const router = useRouter()
 
@@ -87,10 +74,6 @@ export default function RegistoPerfis() {
 
   return (
     <section className="w-full px-4 py-6">
-      {/* =====================================================
-          CONTAINER GERAL ÚNICO
-      ===================================================== */}
-
       <div
         className="
           mx-auto
@@ -107,9 +90,7 @@ export default function RegistoPerfis() {
           sm:py-9
         "
       >
-        {/* =================================================
-            CABEÇALHO
-        ================================================= */}
+        {/* CABEÇALHO */}
 
         <div className="mb-8 text-center">
           <h2
@@ -121,7 +102,7 @@ export default function RegistoPerfis() {
               sm:text-2xl
             "
           >
-            Criar uma conta
+            Criar ou aceder à conta
           </h2>
 
           <p
@@ -133,13 +114,11 @@ export default function RegistoPerfis() {
               sm:text-base
             "
           >
-            Escolha o seu perfil na plataforma
+            Escolha o seu perfil
           </p>
         </div>
 
-        {/* =================================================
-            PERFIS — 3 COLUNAS
-        ================================================= */}
+        {/* PERFIS */}
 
         <div
           className="
@@ -158,8 +137,10 @@ export default function RegistoPerfis() {
               <button
                 key={perfil.id}
                 type="button"
-                onClick={() => abrirPerfil(perfil.link)}
-                aria-label={`Registar como ${perfil.nome}`}
+                onClick={() =>
+                  abrirPerfil(perfil.link)
+                }
+                aria-label={`Abrir opções de ${perfil.nome}`}
                 className="
                   group
                   flex
@@ -181,9 +162,7 @@ export default function RegistoPerfis() {
                   sm:px-2
                 "
               >
-                {/* =================================================
-                    ÍCONE CIRCULAR
-                ================================================= */}
+                {/* ÍCONE */}
 
                 <div
                   className="
@@ -215,9 +194,7 @@ export default function RegistoPerfis() {
                   />
                 </div>
 
-                {/* =================================================
-                    NOME DO PERFIL
-                ================================================= */}
+                {/* NOME */}
 
                 <h3
                   className="
@@ -232,9 +209,7 @@ export default function RegistoPerfis() {
                   {perfil.nome}
                 </h3>
 
-                {/* =================================================
-                    DESCRIÇÃO
-                ================================================= */}
+                {/* DESCRIÇÃO */}
 
                 <p
                   className="
@@ -250,9 +225,7 @@ export default function RegistoPerfis() {
                   {perfil.descricao}
                 </p>
 
-                {/* =================================================
-                    INDICAÇÃO DE CLIQUE
-                ================================================= */}
+                {/* INDICAÇÃO */}
 
                 <span
                   className="
@@ -267,7 +240,7 @@ export default function RegistoPerfis() {
                     sm:text-[11px]
                   "
                 >
-                  Registar
+                  Aceder
                 </span>
               </button>
             )

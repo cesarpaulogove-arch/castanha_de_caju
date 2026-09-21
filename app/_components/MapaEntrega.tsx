@@ -48,17 +48,6 @@ export default function MapaEntrega({
 
       {/* CABEÇALHO */}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-
-        <div className="rounded-full bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
-          {entregadoresComLocalizacao.length}{' '}
-          {entregadoresComLocalizacao.length === 1
-            ? 'entregador'
-            : 'entregadores'}
-        </div>
-
-      </div>
-
       <div className="relative w-full overflow-hidden rounded-xl border border-gray-200 bg-gray-100">
 
         <ComponenteMapaReal
