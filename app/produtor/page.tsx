@@ -8,42 +8,35 @@ import { obterProdutorAutenticado } from '@/lib/auth-user'
 export const dynamic = 'force-dynamic'
 
 export default async function ProdutorPage() {
-  const produtor =
-    await obterProdutorAutenticado()
+  const produtor = await obterProdutorAutenticado()
 
   if (!produtor) {
     redirect('/signin')
   }
 
-  const producoes =
-    await prisma.producao.findMany({
-      where: {
-        produtorId: produtor.id,
-      },
-      include: {
-        produto: true,
-      },
-      orderBy: {
-        dataProducao: 'desc',
-      },
-    })
+  const producoes = await prisma.producao.findMany({
+    where: {
+      produtorId: produtor.id,
+    },
+    include: {
+      produto: true,
+    },
+    orderBy: {
+      dataProducao: 'desc',
+    },
+  })
 
-  const totalProduzido =
-    producoes.reduce(
-      (total, producao) =>
-        total + Number(producao.quantidade),
-      0
-    )
+  const totalProduzido = producoes.reduce(
+    (total, producao) =>
+      total + Number(producao.quantidade),
+    0
+  )
 
-  const totalDisponivel =
-    producoes.reduce(
-      (total, producao) =>
-        total +
-        Number(
-          producao.quantidadeDisponivel
-        ),
-      0
-    )
+  const totalDisponivel = producoes.reduce(
+    (total, producao) =>
+      total + Number(producao.quantidadeDisponivel),
+    0
+  )
 
   return (
     <main className="min-h-screen bg-[#fff8e8] px-4 py-8 text-[#382515]">
@@ -91,12 +84,9 @@ export default async function ProdutorPage() {
             </p>
 
             <p className="mt-2 text-3xl font-bold">
-              {totalProduzido.toLocaleString(
-                'pt-MZ',
-                {
-                  maximumFractionDigits: 3,
-                }
-              )}{' '}
+              {totalProduzido.toLocaleString('pt-MZ', {
+                maximumFractionDigits: 3,
+              })}{' '}
               kg
             </p>
           </div>
@@ -107,12 +97,9 @@ export default async function ProdutorPage() {
             </p>
 
             <p className="mt-2 text-3xl font-bold text-green-700">
-              {totalDisponivel.toLocaleString(
-                'pt-MZ',
-                {
-                  maximumFractionDigits: 3,
-                }
-              )}{' '}
+              {totalDisponivel.toLocaleString('pt-MZ', {
+                maximumFractionDigits: 3,
+              })}{' '}
               kg
             </p>
           </div>
@@ -128,8 +115,7 @@ export default async function ProdutorPage() {
               </h2>
 
               <p className="mt-1 text-sm text-gray-500">
-                Todos os produtos produzidos
-                por si.
+                Todos os produtos produzidos por si.
               </p>
             </div>
 
@@ -154,23 +140,16 @@ export default async function ProdutorPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[850px]">
+              <table className="w-full min-w-[700px]">
                 <thead>
                   <tr className="border-b text-left text-sm text-gray-500">
+
                     <th className="px-4 py-3">
                       Lote
                     </th>
 
                     <th className="px-4 py-3">
                       Produto
-                    </th>
-
-                    <th className="px-4 py-3">
-                      Tamanho
-                    </th>
-
-                    <th className="px-4 py-3">
-                      Classificação
                     </th>
 
                     <th className="px-4 py-3">
@@ -184,62 +163,51 @@ export default async function ProdutorPage() {
                     <th className="px-4 py-3">
                       Data
                     </th>
+
                   </tr>
                 </thead>
 
                 <tbody>
-                  {producoes.map(
-                    (producao) => (
-                      <tr
-                        key={producao.id}
-                        className="border-b last:border-0"
-                      >
-                        <td className="px-4 py-4 font-semibold">
-                          {producao.lote}
-                        </td>
+                  {producoes.map((producao) => (
+                    <tr
+                      key={producao.id}
+                      className="border-b last:border-0"
+                    >
 
-                        <td className="px-4 py-4">
-                          {producao.produto.nome}
-                        </td>
+                      <td className="px-4 py-4 font-semibold">
+                        {producao.lote}
+                      </td>
 
-                        <td className="px-4 py-4">
-                          {producao.tamanho ||
-                            '—'}
-                        </td>
+                      <td className="px-4 py-4">
+                        {producao.produto.nome}
+                      </td>
 
-                        <td className="px-4 py-4">
-                          {producao.classificacao ||
-                            '—'}
-                        </td>
+                      <td className="px-4 py-4">
+                        {Number(
+                          producao.quantidade
+                        ).toLocaleString('pt-MZ', {
+                          maximumFractionDigits: 3,
+                        })}{' '}
+                        kg
+                      </td>
 
-                        <td className="px-4 py-4">
-                          {Number(
-                            producao.quantidade
-                          ).toLocaleString(
-                            'pt-MZ'
-                          )}{' '}
-                          kg
-                        </td>
+                      <td className="px-4 py-4 font-semibold text-green-700">
+                        {Number(
+                          producao.quantidadeDisponivel
+                        ).toLocaleString('pt-MZ', {
+                          maximumFractionDigits: 3,
+                        })}{' '}
+                        kg
+                      </td>
 
-                        <td className="px-4 py-4 font-semibold text-green-700">
-                          {Number(
-                            producao.quantidadeDisponivel
-                          ).toLocaleString(
-                            'pt-MZ'
-                          )}{' '}
-                          kg
-                        </td>
+                      <td className="px-4 py-4 text-sm text-gray-500">
+                        {new Date(
+                          producao.dataProducao
+                        ).toLocaleDateString('pt-MZ')}
+                      </td>
 
-                        <td className="px-4 py-4 text-sm text-gray-500">
-                          {new Date(
-                            producao.dataProducao
-                          ).toLocaleDateString(
-                            'pt-MZ'
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  )}
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
