@@ -1,3 +1,4 @@
+
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
@@ -8,6 +9,10 @@ const config: CapacitorConfig = {
   server: {
     url: 'https://castanha-de-caju.vercel.app/',
     cleartext: false
+  },
+
+  android: {
+    useLegacyBridge: true
   }
 };
 

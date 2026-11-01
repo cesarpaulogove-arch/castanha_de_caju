@@ -99,6 +99,19 @@ export async function obterProcessadorAutenticado() {
 
   return usuario
 }
+export async function obterEntregadorAutenticado() {
+  const usuario = await obterUtilizadorAutenticado()
+
+  if (!usuario) {
+    return null
+  }
+
+  if (usuario.perfil !== 'ENTREGADOR') {
+    return null
+  }
+
+  return usuario
+}
 
 
 

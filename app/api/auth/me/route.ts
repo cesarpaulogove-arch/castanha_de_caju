@@ -9,231 +9,198 @@ import {
   gerarHashToken,
 } from '@/lib/auth-session'
 
+import { TipoSessao, Perfil } from '@/generated/prisma/enums'
+
+// Normalizar telefone
+function normalizarTelefone(valor: string) {
+  const numero = valor.trim().replace(/[\s()-]/g, '')
+
+  if (numero.startsWith('+258')) {
+    return numero
+  }
+
+  if (numero.startsWith('258') && numero.length === 12) {
+    return `+${numero}`
+  }
+
+  if (numero.length === 9) {
+    return `+258${numero}`
+  }
+
+  return numero
+}
+
+// Resposta para sessão inválida
+function respostaNaoAutenticado(status = 401) {
+  const resposta = NextResponse.json(
+    {
+      autenticado: false,
+      usuario: null,
+    },
+    { status }
+  )
+
+  resposta.cookies.set({
+    name: SESSION_COOKIE,
+    value: '',
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0,
+  })
+
+  return resposta
+}
+
 export async function GET() {
   try {
     const cookieStore = await cookies()
 
     const token = cookieStore.get(SESSION_COOKIE)?.value
 
-    /*
-     * ======================================================
-     * SEM COOKIE
-     * ======================================================
-     */
+    // =====================================================
+    // 1. VERIFICAR COOKIE
+    // =====================================================
 
     if (!token) {
-      return NextResponse.json(
-        {
-          autenticado: false,
-          usuario: null,
-        },
-        { status: 401 }
-      )
+      return respostaNaoAutenticado()
     }
 
     const tokenHash = gerarHashToken(token)
 
-    /*
-     * ======================================================
-     * PROCURAR SESSÃO
-     * ======================================================
-     *
-     * IMPORTANTE:
-     *
-     * A sessão do GESTOR não possui usuarioId.
-     *
-     * Portanto:
-     *
-     * GESTOR
-     *   usuarioId = null
-     *   tipo = GESTOR
-     *
-     * UTILIZADOR
-     *   usuarioId = ID do Usuario
-     *   tipo = UTILIZADOR
-     */
+    // =====================================================
+    // 2. PROCURAR SESSÃO
+    // =====================================================
 
     const sessao = await prisma.sessao.findUnique({
       where: {
         tokenHash,
       },
       include: {
-        usuario: true,
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+            telefone: true,
+            localizacao: true,
+            perfil: true,
+            ativo: true,
+          },
+        },
       },
     })
 
-    /*
-     * ======================================================
-     * SESSÃO NÃO ENCONTRADA
-     * ======================================================
-     */
-
     if (!sessao) {
-      return NextResponse.json(
-        {
-          autenticado: false,
-          usuario: null,
-        },
-        { status: 401 }
-      )
+      return respostaNaoAutenticado()
     }
 
-    /*
-     * ======================================================
-     * SESSÃO EXPIRADA
-     * ======================================================
-     */
+    // =====================================================
+    // 3. VERIFICAR EXPIRAÇÃO
+    // =====================================================
 
     if (sessao.expiraEm <= new Date()) {
-      await prisma.sessao.delete({
+      await prisma.sessao.deleteMany({
         where: {
           id: sessao.id,
         },
       })
 
-      const resposta = NextResponse.json(
-        {
-          autenticado: false,
-          usuario: null,
-        },
-        { status: 401 }
-      )
-
-      resposta.cookies.delete(SESSION_COOKIE)
-
-      return resposta
+      return respostaNaoAutenticado()
     }
 
-    /*
-     * ======================================================
-     * GESTOR PRINCIPAL
-     * ======================================================
-     *
-     * O gestor NÃO existe na tabela Usuario.
-     *
-     * Ele é reconhecido através de:
-     *
-     * GESTOR_EMAIL
-     * GESTOR_PASSWORD
-     *
-     * definidos no .env.
-     *
-     * A sessão do gestor possui:
-     *
-     * tipo = GESTOR
-     * usuarioId = null
-     */
+    // =====================================================
+    // 4. GESTOR PRINCIPAL
+    // =====================================================
 
-    if (sessao.tipo === 'GESTOR') {
-      const gestorEmail = process.env.GESTOR_EMAIL
-        ?.trim()
-        .toLowerCase()
+    if (sessao.tipo === TipoSessao.GESTOR) {
+      const gestorTelefone = process.env.GESTOR_TELEFONE
+        ? normalizarTelefone(process.env.GESTOR_TELEFONE)
+        : ''
 
-      /*
-       * Por segurança, a sessão de gestor só é
-       * considerada válida se o email do gestor
-       * continuar configurado no servidor.
-       */
+      const gestorPin = process.env.GESTOR_PIN
 
-      if (!gestorEmail) {
+      // Verificar configuração do gestor
+      if (!gestorTelefone || !gestorPin) {
         console.error(
-          'GESTOR_EMAIL não está configurado no .env'
+          'GESTOR_TELEFONE ou GESTOR_PIN não configurado no servidor.'
         )
 
-        await prisma.sessao.delete({
+        await prisma.sessao.deleteMany({
           where: {
             id: sessao.id,
           },
         })
 
-        const resposta = NextResponse.json(
-          {
-            autenticado: false,
-            usuario: null,
-          },
-          { status: 401 }
-        )
-
-        resposta.cookies.delete(SESSION_COOKIE)
-
-        return resposta
+        return respostaNaoAutenticado()
       }
 
-      /*
-       * IMPORTANTE:
-       *
-       * Não tentamos acessar:
-       *
-       * sessao.usuario.ativo
-       *
-       * porque o gestor não possui Usuario.
-       */
+      // A sessão do gestor não deve possuir utilizador associado
+      if (sessao.usuarioId !== null) {
+        await prisma.sessao.deleteMany({
+          where: {
+            id: sessao.id,
+          },
+        })
+
+        return respostaNaoAutenticado()
+      }
 
       return NextResponse.json({
         autenticado: true,
         usuario: {
           nome: 'Gestor Principal',
-          email: gestorEmail,
-          perfil: 'GESTOR',
+          telefone: gestorTelefone,
+          perfil: Perfil.GESTOR,
         },
       })
     }
 
-    /*
-     * ======================================================
-     * UTILIZADOR NORMAL
-     * ======================================================
-     *
-     * A partir daqui esperamos uma sessão do tipo
-     * UTILIZADOR com um usuario associado.
-     */
+    // =====================================================
+    // 5. VALIDAR TIPO DE SESSÃO
+    // =====================================================
 
-    if (!sessao.usuario) {
-      console.error(
-        'Sessão de utilizador sem Usuario associado:',
-        sessao.id
-      )
-
-      await prisma.sessao.delete({
+    if (sessao.tipo !== TipoSessao.UTILIZADOR) {
+      await prisma.sessao.deleteMany({
         where: {
           id: sessao.id,
         },
       })
 
-      const resposta = NextResponse.json(
-        {
-          autenticado: false,
-          usuario: null,
-        },
-        { status: 401 }
-      )
-
-      resposta.cookies.delete(SESSION_COOKIE)
-
-      return resposta
+      return respostaNaoAutenticado()
     }
 
-    /*
-     * ======================================================
-     * CONTA DESATIVADA
-     * ======================================================
-     */
+    // =====================================================
+    // 6. VERIFICAR UTILIZADOR ASSOCIADO
+    // =====================================================
+
+    if (!sessao.usuario) {
+      await prisma.sessao.deleteMany({
+        where: {
+          id: sessao.id,
+        },
+      })
+
+      return respostaNaoAutenticado()
+    }
+
+    // =====================================================
+    // 7. VERIFICAR ESTADO DA CONTA
+    // =====================================================
 
     if (!sessao.usuario.ativo) {
-      return NextResponse.json(
-        {
-          autenticado: false,
-          usuario: null,
+      await prisma.sessao.deleteMany({
+        where: {
+          id: sessao.id,
         },
-        { status: 403 }
-      )
+      })
+
+      return respostaNaoAutenticado(403)
     }
 
-    /*
-     * ======================================================
-     * UTILIZADOR AUTENTICADO
-     * ======================================================
-     */
+    // =====================================================
+    // 8. UTILIZADOR AUTENTICADO
+    // =====================================================
 
     return NextResponse.json({
       autenticado: true,
@@ -241,11 +208,11 @@ export async function GET() {
         id: sessao.usuario.id,
         nome: sessao.usuario.nome,
         telefone: sessao.usuario.telefone,
-        email: sessao.usuario.email,
         localizacao: sessao.usuario.localizacao,
         perfil: sessao.usuario.perfil,
       },
     })
+
   } catch (error) {
     console.error(
       'ERRO AO VERIFICAR SESSÃO:',
@@ -256,9 +223,9 @@ export async function GET() {
       {
         autenticado: false,
         usuario: null,
+        mensagem: 'Não foi possível verificar a sessão.',
       },
       { status: 500 }
     )
   }
 }
-

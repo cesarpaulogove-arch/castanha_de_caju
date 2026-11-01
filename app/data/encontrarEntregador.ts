@@ -1,12 +1,32 @@
-import { ENTREGADORES } from './entregadores'
+
 import { calcularDistancia } from './distancia'
+
+export interface EntregadorLocalizacao {
+  id: number
+  nome: string
+  telefone?: string
+  online: boolean
+  latitude: number
+  longitude: number
+}
 
 export function encontrarEntregadorMaisProximo(
   latitudeCliente: number,
-  longitudeCliente: number
+  longitudeCliente: number,
+  entregadores: EntregadorLocalizacao[]
 ) {
-  const entregadoresOnline = ENTREGADORES.filter(
-    (entregador) => entregador.online
+  if (
+    !Number.isFinite(latitudeCliente) ||
+    !Number.isFinite(longitudeCliente)
+  ) {
+    return null
+  }
+
+  const entregadoresOnline = entregadores.filter(
+    (entregador) =>
+      entregador.online &&
+      Number.isFinite(entregador.latitude) &&
+      Number.isFinite(entregador.longitude)
   )
 
   if (entregadoresOnline.length === 0) {
@@ -22,7 +42,7 @@ export function encontrarEntregadorMaisProximo(
     maisProximo.longitude
   )
 
-  for (const entregador of entregadoresOnline) {
+  for (const entregador of entregadoresOnline.slice(1)) {
     const distancia = calcularDistancia(
       latitudeCliente,
       longitudeCliente,

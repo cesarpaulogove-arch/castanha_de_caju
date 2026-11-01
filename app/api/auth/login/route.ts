@@ -13,77 +13,108 @@ import {
   dataExpiracaoSessao,
 } from '@/lib/auth-session'
 
+// Normalizar número de telemóvel
+function normalizarTelefone(valor: string) {
+  const numero = valor.trim().replace(/[\s()-]/g, '')
+
+  if (numero.startsWith('+258')) {
+    return numero
+  }
+
+  if (numero.startsWith('258') && numero.length === 12) {
+    return `+${numero}`
+  }
+
+  if (numero.length === 9) {
+    return `+258${numero}`
+  }
+
+  return numero
+}
+
+// Validar número moçambicano
+function telefoneValido(telefone: string) {
+  return /^\+2588[2-7]\d{7}$/.test(telefone)
+}
+
+// Criar cookie de sessão
+function adicionarCookie(
+  resposta: NextResponse,
+  token: string,
+  expiraEm: Date
+) {
+  resposta.cookies.set({
+    name: SESSION_COOKIE,
+    value: token,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: SESSION_DURATION / 1000,
+    expires: expiraEm,
+  })
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    const emailRecebido = body?.email
+    const telefoneRecebido = body?.telefone
     const senhaRecebida = body?.senha
 
-    /*
-     * =====================================================
-     * VALIDAR DADOS
-     * =====================================================
-     */
-
-    if (!emailRecebido || !senhaRecebida) {
+    // VALIDAR DADOS
+    if (!telefoneRecebido || !senhaRecebida) {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem:
-            'Informe o email e a palavra-passe.',
+          mensagem: 'Informe o número de telemóvel e o PIN.',
         },
         { status: 400 }
       )
     }
 
-    const email = String(emailRecebido)
-      .trim()
-      .toLowerCase()
+    const telefone = normalizarTelefone(
+      String(telefoneRecebido)
+    )
 
     const senha = String(senhaRecebida)
 
-    /*
-     * =====================================================
-     * 1. VERIFICAR GESTOR PRINCIPAL
-     * =====================================================
-     *
-     * O gestor NÃO precisa existir na tabela Usuario.
-     *
-     * As credenciais são obtidas do .env:
-     *
-     * GESTOR_EMAIL
-     * GESTOR_PASSWORD
-     */
+    if (!telefoneValido(telefone)) {
+      return NextResponse.json(
+        {
+          sucesso: false,
+          mensagem: 'Informe um número de telemóvel válido.',
+        },
+        { status: 400 }
+      )
+    }
 
-    const gestorEmail = process.env.GESTOR_EMAIL
-      ?.trim()
-      .toLowerCase()
+    if (!/^\d{4}$/.test(senha)) {
+      return NextResponse.json(
+        {
+          sucesso: false,
+          mensagem: 'O PIN deve conter exactamente 4 dígitos.',
+        },
+        { status: 400 }
+      )
+    }
 
-    const gestorPassword =
-      process.env.GESTOR_PASSWORD
+    // =====================================================
+    // 1. VERIFICAR GESTOR PRINCIPAL
+    // =====================================================
+
+    const gestorTelefoneConfigurado = process.env.GESTOR_TELEFONE
+      ? normalizarTelefone(process.env.GESTOR_TELEFONE)
+      : ''
+
+    const gestorPin = process.env.GESTOR_PIN
 
     if (
-      gestorEmail &&
-      gestorPassword &&
-      email === gestorEmail &&
-      senha === gestorPassword
+      gestorTelefoneConfigurado &&
+      gestorPin &&
+      telefone === gestorTelefoneConfigurado &&
+      senha === gestorPin
     ) {
-      /*
-       * ===================================================
-       * CRIAR SESSÃO DO GESTOR
-       * ===================================================
-       *
-       * IMPORTANTE:
-       *
-       * O gestor não possui Usuario.
-       *
-       * Portanto:
-       *
-       * usuarioId = null
-       * tipo = GESTOR
-       */
-
       const token = criarTokenSessao()
       const tokenHash = gerarHashToken(token)
       const expiraEm = dataExpiracaoSessao()
@@ -91,114 +122,67 @@ export async function POST(request: Request) {
       await prisma.sessao.create({
         data: {
           tokenHash,
-
-          /*
-           * O gestor não possui registro em Usuario.
-           */
           usuarioId: null,
-
-          /*
-           * Identifica esta sessão como sessão
-           * do gestor principal.
-           */
           tipo: TipoSessao.GESTOR,
-
           expiraEm,
         },
       })
 
-      /*
-       * ===================================================
-       * RESPOSTA DO GESTOR
-       * ===================================================
-       */
-
       const resposta = NextResponse.json(
         {
           sucesso: true,
-          mensagem:
-            'Login efetuado com sucesso.',
+          mensagem: 'Login efectuado com sucesso.',
           usuario: {
             nome: 'Gestor Principal',
-            email: gestorEmail,
+            telefone: gestorTelefoneConfigurado,
             perfil: Perfil.GESTOR,
           },
         },
         { status: 200 }
       )
 
-      /*
-       * ===================================================
-       * COOKIE DA SESSÃO
-       * ===================================================
-       */
-
-      resposta.cookies.set({
-        name: SESSION_COOKIE,
-        value: token,
-        httpOnly: true,
-        secure:
-          process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: SESSION_DURATION / 1000,
-        expires: expiraEm,
-      })
+      adicionarCookie(resposta, token, expiraEm)
 
       return resposta
     }
 
-    /*
-     * =====================================================
-     * 2. PROCURAR UTILIZADOR NORMAL
-     * =====================================================
-     */
+    // =====================================================
+    // 2. PROCURAR UTILIZADOR PELO TELEFONE
+    // =====================================================
 
     const usuario = await prisma.usuario.findUnique({
       where: {
-        email,
+        telefone,
       },
     })
-
-    /*
-     * =====================================================
-     * UTILIZADOR NÃO ENCONTRADO
-     * =====================================================
-     */
 
     if (!usuario) {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem:
-            'Email ou palavra-passe incorretos.',
+          mensagem: 'Número de telemóvel ou PIN incorretos.',
         },
         { status: 401 }
       )
     }
 
-    /*
-     * =====================================================
-     * CONTA DESATIVADA
-     * =====================================================
-     */
+    // =====================================================
+    // 3. VERIFICAR ESTADO DA CONTA
+    // =====================================================
 
     if (!usuario.ativo) {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem:
-            'Esta conta está desativada.',
+          mensagem: 'Esta conta está desativada.',
         },
         { status: 403 }
       )
     }
 
-    /*
-     * =====================================================
-     * VERIFICAR PALAVRA-PASSE
-     * =====================================================
-     */
+    // =====================================================
+    // 4. VERIFICAR PIN
+    // =====================================================
 
     const senhaCorreta = await bcrypt.compare(
       senha,
@@ -209,18 +193,15 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem:
-            'Email ou palavra-passe incorretos.',
+          mensagem: 'Número de telemóvel ou PIN incorretos.',
         },
         { status: 401 }
       )
     }
 
-    /*
-     * =====================================================
-     * 3. CRIAR SESSÃO DO UTILIZADOR NORMAL
-     * =====================================================
-     */
+    // =====================================================
+    // 5. CRIAR SESSÃO DO UTILIZADOR
+    // =====================================================
 
     const token = criarTokenSessao()
     const tokenHash = gerarHashToken(token)
@@ -229,38 +210,24 @@ export async function POST(request: Request) {
     await prisma.sessao.create({
       data: {
         tokenHash,
-
-        /*
-         * Utilizador normal possui Usuario.
-         */
         usuarioId: usuario.id,
-
-        /*
-         * Identifica esta sessão como sessão
-         * de utilizador normal.
-         */
         tipo: TipoSessao.UTILIZADOR,
-
         expiraEm,
       },
     })
 
-    /*
-     * =====================================================
-     * RESPOSTA DO UTILIZADOR
-     * =====================================================
-     */
+    // =====================================================
+    // 6. RESPOSTA
+    // =====================================================
 
     const resposta = NextResponse.json(
       {
         sucesso: true,
-        mensagem:
-          'Login efetuado com sucesso.',
+        mensagem: 'Login efectuado com sucesso.',
         usuario: {
           id: usuario.id,
           nome: usuario.nome,
           telefone: usuario.telefone,
-          email: usuario.email,
           localizacao: usuario.localizacao,
           perfil: usuario.perfil,
         },
@@ -268,39 +235,19 @@ export async function POST(request: Request) {
       { status: 200 }
     )
 
-    /*
-     * =====================================================
-     * COOKIE DA SESSÃO
-     * =====================================================
-     */
-
-    resposta.cookies.set({
-      name: SESSION_COOKIE,
-      value: token,
-      httpOnly: true,
-      secure:
-        process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: SESSION_DURATION / 1000,
-      expires: expiraEm,
-    })
+    adicionarCookie(resposta, token, expiraEm)
 
     return resposta
+
   } catch (error) {
-    console.error(
-      'ERRO NO LOGIN:',
-      error
-    )
+    console.error('ERRO NO LOGIN:', error)
 
     return NextResponse.json(
       {
         sucesso: false,
-        mensagem:
-          'Não foi possível efetuar o login.',
+        mensagem: 'Não foi possível efectuar o login.',
       },
       { status: 500 }
     )
   }
 }
-

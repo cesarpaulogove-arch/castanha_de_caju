@@ -2,7 +2,6 @@
 
 import {
   Sprout,
-  ShoppingBag,
   Bike,
   Package,
   Factory,
@@ -27,13 +26,6 @@ const PERFIS: PerfilRegisto[] = [
     descricao: 'Produza e venda castanhas',
     icon: Sprout,
     link: '/registo/produtor',
-  },
-  {
-    id: 'cliente',
-    nome: 'Cliente',
-    descricao: 'Compre castanhas e produtos',
-    icon: ShoppingBag,
-    link: '/registo/cliente',
   },
   {
     id: 'entregador',
@@ -137,9 +129,7 @@ export default function RegistoPerfis() {
               <button
                 key={perfil.id}
                 type="button"
-                onClick={() =>
-                  abrirPerfil(perfil.link)
-                }
+                onClick={() => abrirPerfil(perfil.link)}
                 aria-label={`Abrir opções de ${perfil.nome}`}
                 className="
                   group

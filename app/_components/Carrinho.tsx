@@ -1,1633 +1,1451 @@
+
 'use client'
 
-import { useState, useEffect } from 'react'
+import {
+  useEffect,
+  useState,
+} from 'react'
 
 import {
   Tag,
   X,
-  User,
-  MapPin,
-  Phone,
-  CheckCircle
+  CheckCircle,
+  ShoppingCart,
 } from 'lucide-react'
 
-import { ENTREGADORES } from '../data/entregadores'
+import FormularioEntrega from './formulario/FormularioEntrega'
+
+/*
+|--------------------------------------------------------------------------
+| CONFIGURAÇÕES
+|--------------------------------------------------------------------------
+*/
+
+const PRECO_BASE_COPO = 175.90
+const KG_POR_COPO = 0.5
+
+const DESCONTO_GROSSISTA = 0.05
+const QUANTIDADE_DESCONTO = 10
+
+/*
+|--------------------------------------------------------------------------
+| TIPOS
+|--------------------------------------------------------------------------
+*/
 
 interface ItemCarrinho {
   produtoId: string
   quantidade: number
 }
 
+interface Entregador {
+  id: number
+  nome: string
+  telefone: string | null
+
+  /*
+   * São opcionais porque a API atual ainda pode
+   * devolver apenas id, nome e telefone.
+   *
+   * Quando o GPS for ligado ao banco, estas propriedades
+   * poderão ser utilizadas automaticamente.
+   */
+  latitude?: number | null
+  longitude?: number | null
+  online?: boolean
+  velocidade?: number | null
+  ultimaAtualizacao?: string | null
+  foto?: string | null
+}
+
+interface EntregadorSorteado {
+  nome: string
+  foto?: string
+}
+
 interface CarrinhoProps {
   itens: ItemCarrinho[]
-  medidorSelecionado: 'copo' | 'balde-medio' | 'balde-grande'
+
+  medidorSelecionado:
+    | 'copo'
+    | 'balde-medio'
+    | 'balde-grande'
+
   aoLimparCarrinho?: () => void
   aoResetarCatalogo?: () => void
 }
 
-
-interface ClienteAutenticado {
-  id: number
-  nome: string
-  telefone: string | null
-  email: string
-  localizacao: string
-  perfil: string
-}
+/*
+|--------------------------------------------------------------------------
+| DISTÂNCIA HAVERSINE
+|--------------------------------------------------------------------------
+*/
 
 function calcularDistancia(
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
+  latitude1: number,
+  longitude1: number,
+  latitude2: number,
+  longitude2: number,
 ) {
-  const R = 6371
+  const raioTerra = 6371
 
-  const dLat = (lat2 - lat1) * Math.PI / 180
-  const dLon = (lon2 - lon1) * Math.PI / 180
+  const diferencaLatitude =
+    ((latitude2 - latitude1) * Math.PI) / 180
+
+  const diferencaLongitude =
+    ((longitude2 - longitude1) * Math.PI) / 180
 
   const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-      Math.cos(lat2 * Math.PI / 180) *
-      Math.sin(dLon / 2) ** 2
+    Math.sin(diferencaLatitude / 2) *
+      Math.sin(diferencaLatitude / 2) +
+    Math.cos(
+      (latitude1 * Math.PI) / 180,
+    ) *
+      Math.cos(
+        (latitude2 * Math.PI) / 180,
+      ) *
+      Math.sin(diferencaLongitude / 2) *
+      Math.sin(diferencaLongitude / 2)
 
-  return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)))
-}
-
-export function useGeolocation() {
-  const [latitude, setLatitude] = useState<number | null>(null)
-  const [longitude, setLongitude] = useState<number | null>(null)
-
-  useEffect(() => {
-    if (!navigator.geolocation) return
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLatitude(pos.coords.latitude)
-        setLongitude(pos.coords.longitude)
-      },
-      (error) => {
-        console.error('Erro ao obter localização:', error)
-      }
+  const c =
+    2 *
+    Math.atan2(
+      Math.sqrt(a),
+      Math.sqrt(1 - a),
     )
-  }, [])
 
-  return {
-    latitude,
-    longitude
-  }
+  return raioTerra * c
 }
+
+/*
+|--------------------------------------------------------------------------
+| COMPONENTE
+|--------------------------------------------------------------------------
+*/
 
 export default function Carrinho({
   itens,
   medidorSelecionado,
   aoLimparCarrinho,
-  aoResetarCatalogo
+  aoResetarCatalogo,
 }: CarrinhoProps) {
 
-  const produtoFixoId = '1'
+  /*
+  |--------------------------------------------------------------------------
+  | ENTREGADORES
+  |--------------------------------------------------------------------------
+  */
 
-  const itemAtivo = itens.find(
-    item => item.produtoId === produtoFixoId
-  )
+  const [
+    entregadores,
+    setEntregadores,
+  ] = useState<Entregador[]>([])
 
-  const totalItensCarrinho = itemAtivo
-    ? itemAtivo.quantidade
-    : 0
+  const [
+    carregandoEntregadores,
+    setCarregandoEntregadores,
+  ] = useState(false)
 
-  // ==============================
-  // PREÇOS
-  // ==============================
+  /*
+  |--------------------------------------------------------------------------
+  | ESTADOS DO CLIENTE
+  |--------------------------------------------------------------------------
+  */
 
-  const precoBaseCopo = 175.90
+  const [
+    clienteEncontrado,
+    setClienteEncontrado,
+  ] = useState(false)
 
-  const valorTotalCarrinho =
-    totalItensCarrinho * precoBaseCopo
+  const [
+    clienteConsultado,
+    setClienteConsultado,
+  ] = useState(false)
 
-  const aplicaDesconto =
-    totalItensCarrinho >= 10
+  const [
+    aProcurarCliente,
+    setAProcurarCliente,
+  ] = useState(false)
 
-  const desconto =
-    aplicaDesconto
-      ? valorTotalCarrinho * 0.05
-      : 0
+  /*
+  |--------------------------------------------------------------------------
+  | ESTADOS DO FORMULÁRIO
+  |--------------------------------------------------------------------------
+  */
 
-  const taxaEntrega =
-    totalItensCarrinho > 0 &&
-    valorTotalCarrinho < 1500
-      ? 0
-      : 0
+  const [
+    formularioAberto,
+    setFormularioAberto,
+  ] = useState(false)
 
-  const totalAPagar =
-    (valorTotalCarrinho - desconto) +
-    taxaEntrega
+  const [
+    sucesso,
+    setSucesso,
+  ] = useState(false)
 
-  const pesoTotalKg =
-    totalItensCarrinho * 0.5
+  const [
+    estaAProcessar,
+    setEstaAProcessar,
+  ] = useState(false)
 
+  const [
+    nome,
+    setNome,
+  ] = useState('')
 
-    
+  const [
+    distrito,
+    setDistrito,
+  ] = useState('')
 
-  // ==============================
-  // FORMATAÇÃO
-  // ==============================
+  const [
+    bairro,
+    setBairro,
+  ] = useState('')
 
-  const formataPreco = (valor: number) => {
-    return new Intl.NumberFormat('de-DE', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    }).format(valor)
-  }
-
-  // ==============================
-  // DISCRIMINAÇÃO DOS PRODUTOS
-  // ==============================
-
-  let coposRestantes = totalItensCarrinho
-
-  const qtdBaldesGrandes =
-    Math.floor(coposRestantes / 40)
-
-  coposRestantes %= 40
-
-  const qtdBaldesMedios =
-    Math.floor(coposRestantes / 10)
-
-  coposRestantes %= 10
-
-  const qtdCoposAvulsos =
-    coposRestantes
-
-  const discriminacaoItens = [
-    {
-      label: 'B.Grande(20kg)',
-      quantidade: qtdBaldesGrandes,
-      preco: qtdBaldesGrandes * 7036.00
-    },
-    {
-      label: 'B.Médio(5kg)',
-      quantidade: qtdBaldesMedios,
-      preco: qtdBaldesMedios * 1759.00
-    },
-    {
-      label: 'Copos',
-      quantidade: qtdCoposAvulsos,
-      preco: qtdCoposAvulsos * 175.90
-    }
-  ].filter(
-    item => item.quantidade > 0
-  )
-
-  // ==============================
-  // ESTADOS
-  // ==============================
-
-  const [formularioAberto, setFormularioAberto] =
-    useState(false)
-
-  const [sucesso, setSucesso] =
-    useState(false)
-
-  const [estaAProcessar, setEstaAProcessar] =
-    useState(false)
-
-  const [nome, setNome] =
-    useState('')
-
-  const [distrito, setDistrito] =
-    useState('')
-
-  const [bairro, setBairro] =
-    useState('')
-
-  const [telefone, setTelefone] =
-    useState('')
-
-  const {
-    latitude,
-    longitude
-  } = useGeolocation()
+  const [
+    telefone,
+    setTelefone,
+  ] = useState('')
 
   const [
     entregadorSorteado,
-    setEntregadorSorteado
-  ] = useState<{
-    nome: string
-    foto: string
-  } | null>(null)
+    setEntregadorSorteado,
+  ] = useState<EntregadorSorteado | null>(
+    null,
+  )
 
-  // ==============================
-  // ENVIO DO PEDIDO
-  // ==============================
+  /*
+  |--------------------------------------------------------------------------
+  | CARREGAR ENTREGADORES DO BANCO
+  |--------------------------------------------------------------------------
+  */
 
-  const gerirSubmissao = async (
-    e: React.FormEvent
-  ) => {
+  useEffect(() => {
+    const controller =
+      new AbortController()
 
-    e.preventDefault()
+    async function carregarEntregadores() {
+      try {
+        setCarregandoEntregadores(true)
+
+        const resposta =
+          await fetch(
+            '/api/entregadores',
+            {
+              method: 'GET',
+              cache: 'no-store',
+              signal:
+                controller.signal,
+            },
+          )
+
+        const texto =
+          await resposta.text()
+
+        let dados: unknown = null
+
+        try {
+          dados = texto
+            ? JSON.parse(texto)
+            : null
+        } catch {
+          dados = null
+        }
+
+        if (!resposta.ok) {
+          throw new Error(
+            typeof dados === 'object' &&
+              dados !== null &&
+              'mensagem' in dados
+              ? String(
+                  (
+                    dados as {
+                      mensagem?: unknown
+                    }
+                  ).mensagem ??
+                    'Não foi possível carregar os entregadores.',
+                )
+              : 'Não foi possível carregar os entregadores.',
+          )
+        }
+
+        if (!Array.isArray(dados)) {
+          throw new Error(
+            'A API de entregadores devolveu um formato inválido.',
+          )
+        }
+
+        const lista =
+          dados.filter(
+            (
+              item,
+            ): item is Entregador =>
+              typeof item === 'object' &&
+              item !== null &&
+              typeof (
+                item as {
+                  id?: unknown
+                }
+              ).id === 'number' &&
+              typeof (
+                item as {
+                  nome?: unknown
+                }
+              ).nome === 'string',
+          )
+
+        setEntregadores(lista)
+      } catch (erro) {
+        if (
+          erro instanceof Error &&
+          erro.name === 'AbortError'
+        ) {
+          return
+        }
+
+        console.error(
+          'ERRO AO CARREGAR ENTREGADORES:',
+          erro,
+        )
+
+        setEntregadores([])
+      } finally {
+        if (
+          !controller.signal.aborted
+        ) {
+          setCarregandoEntregadores(
+            false,
+          )
+        }
+      }
+    }
+
+    carregarEntregadores()
+
+    return () => {
+      controller.abort()
+    }
+  }, [])
+
+  /*
+  |--------------------------------------------------------------------------
+  | TOTAL DE ITENS
+  |--------------------------------------------------------------------------
+  */
+
+  const totalItensCarrinho =
+    itens.reduce(
+      (total, item) =>
+        total +
+        Math.max(
+          0,
+          Number(item.quantidade) || 0,
+        ),
+      0,
+    )
+
+  /*
+  |--------------------------------------------------------------------------
+  | VALORES
+  |--------------------------------------------------------------------------
+  */
+
+  const valorTotalCarrinho =
+    totalItensCarrinho *
+    PRECO_BASE_COPO
+
+  const desconto =
+    totalItensCarrinho >=
+    QUANTIDADE_DESCONTO
+      ? valorTotalCarrinho *
+        DESCONTO_GROSSISTA
+      : 0
+
+  const taxaEntrega = 0
+
+  const totalAPagar =
+    valorTotalCarrinho -
+    desconto +
+    taxaEntrega
+
+  const pesoTotalKg =
+    totalItensCarrinho *
+    KG_POR_COPO
+
+  /*
+  |--------------------------------------------------------------------------
+  | DISCRIMINAÇÃO DOS ITENS
+  |--------------------------------------------------------------------------
+  */
+
+  const discriminacaoItens = () => {
+    let quantidadeRestante =
+      totalItensCarrinho
+
+    const resultado: Array<{
+      label: string
+      quantidade: number
+      precoUnitario: number
+      preco: number
+    }> = []
+
+    const quantidadeBaldeGrande =
+      Math.floor(
+        quantidadeRestante / 40,
+      )
+
+    if (quantidadeBaldeGrande > 0) {
+      resultado.push({
+        label: 'B. Grande (20kg)',
+        quantidade:
+          quantidadeBaldeGrande,
+        precoUnitario:
+          PRECO_BASE_COPO * 40,
+        preco:
+          quantidadeBaldeGrande *
+          PRECO_BASE_COPO *
+          40,
+      })
+
+      quantidadeRestante -=
+        quantidadeBaldeGrande * 40
+    }
+
+    const quantidadeBaldeMedio =
+      Math.floor(
+        quantidadeRestante / 10,
+      )
+
+    if (quantidadeBaldeMedio > 0) {
+      resultado.push({
+        label: 'B. Médio (5kg)',
+        quantidade:
+          quantidadeBaldeMedio,
+        precoUnitario:
+          PRECO_BASE_COPO * 10,
+        preco:
+          quantidadeBaldeMedio *
+          PRECO_BASE_COPO *
+          10,
+      })
+
+      quantidadeRestante -=
+        quantidadeBaldeMedio * 10
+    }
+
+    if (quantidadeRestante > 0) {
+      resultado.push({
+        label: 'Copos',
+        quantidade:
+          quantidadeRestante,
+        precoUnitario:
+          PRECO_BASE_COPO,
+        preco:
+          quantidadeRestante *
+          PRECO_BASE_COPO,
+      })
+    }
+
+    return resultado
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | PROCURAR CLIENTE
+  |--------------------------------------------------------------------------
+  */
+
+  async function procurarCliente(
+    telefoneRecebido?: string,
+  ) {
+    const telefoneAtual = (
+      telefoneRecebido ??
+      telefone
+    ).replace(/\D/g, '')
+
+    if (telefoneAtual.length !== 9) {
+      setClienteConsultado(false)
+      setClienteEncontrado(false)
+      return
+    }
+
+    setAProcurarCliente(true)
+    setClienteConsultado(false)
+    setClienteEncontrado(false)
+
+    try {
+      const resposta =
+        await fetch(
+          `/api/clientes?telefone=${encodeURIComponent(
+            telefoneAtual,
+          )}`,
+          {
+            method: 'GET',
+            cache: 'no-store',
+          },
+        )
+
+      const texto =
+        await resposta.text()
+
+      let dados: any = null
+
+      try {
+        dados = texto
+          ? JSON.parse(texto)
+          : null
+      } catch {
+        dados = null
+      }
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados?.mensagem ||
+            'Não foi possível procurar o cliente.',
+        )
+      }
+
+      if (
+        dados?.sucesso &&
+        dados?.encontrado &&
+        dados?.cliente
+      ) {
+        const cliente =
+          dados.cliente
+
+        setNome(
+          cliente.nome ?? '',
+        )
+
+        setTelefone(
+          cliente.telefone ??
+            telefoneAtual,
+        )
+
+        setDistrito(
+          cliente.distrito ?? '',
+        )
+
+        setBairro(
+          cliente.bairro ?? '',
+        )
+
+        setClienteEncontrado(true)
+        setClienteConsultado(true)
+
+        return
+      }
+
+      setClienteEncontrado(false)
+      setClienteConsultado(true)
+
+      setNome('')
+      setDistrito('')
+      setBairro('')
+    } catch (erro) {
+      console.error(
+        'ERRO AO PROCURAR CLIENTE:',
+        erro,
+      )
+
+      setClienteEncontrado(false)
+      setClienteConsultado(true)
+
+      alert(
+        erro instanceof Error
+          ? erro.message
+          : 'Erro ao procurar cliente.',
+      )
+    } finally {
+      setAProcurarCliente(false)
+    }
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | ABRIR FORMULÁRIO
+  |--------------------------------------------------------------------------
+  */
+
+  function abrirFormulario() {
+    if (totalItensCarrinho <= 0) {
+      alert(
+        'Adicione pelo menos um produto ao carrinho.',
+      )
+
+      return
+    }
+
+    setClienteConsultado(false)
+    setClienteEncontrado(false)
+    setAProcurarCliente(false)
+
+    setNome('')
+    setDistrito('')
+    setBairro('')
+    setTelefone('')
+
+    setEntregadorSorteado(null)
+
+    setSucesso(false)
+    setEstaAProcessar(false)
+
+    setFormularioAberto(true)
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | FECHAR FORMULÁRIO
+  |--------------------------------------------------------------------------
+  */
+
+  function fecharFormulario() {
+    if (estaAProcessar) {
+      return
+    }
+
+    setFormularioAberto(false)
+
+    setClienteConsultado(false)
+    setClienteEncontrado(false)
+    setAProcurarCliente(false)
+
+    setNome('')
+    setDistrito('')
+    setBairro('')
+    setTelefone('')
+
+    setEntregadorSorteado(null)
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | FINALIZAR SUCESSO
+  |--------------------------------------------------------------------------
+  */
+
+  function finalizarSucesso() {
+    setSucesso(false)
+    setFormularioAberto(false)
+
+    setClienteConsultado(false)
+    setClienteEncontrado(false)
+    setAProcurarCliente(false)
+
+    setNome('')
+    setDistrito('')
+    setBairro('')
+    setTelefone('')
+
+    setEntregadorSorteado(null)
+
+    aoLimparCarrinho?.()
+    aoResetarCatalogo?.()
+
+    setEstaAProcessar(false)
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | SUBMISSÃO DO PEDIDO
+  |--------------------------------------------------------------------------
+  */
+
+  async function gerirSubmissao(
+    evento: React.FormEvent<HTMLFormElement>,
+  ) {
+    evento.preventDefault()
+
+    if (estaAProcessar) {
+      return
+    }
+
+    const nomeLimpo =
+      nome.trim()
+
+    const distritoLimpo =
+      distrito.trim()
+
+    const bairroLimpo =
+      bairro.trim()
+
+    const telefoneNormalizado =
+      telefone.replace(/\D/g, '')
 
     if (
-      !nome ||
-      !distrito ||
-      !bairro ||
-      !telefone ||
-      estaAProcessar
+      telefoneNormalizado.length !== 9
     ) {
+      alert(
+        'Introduza um número de WhatsApp válido com 9 dígitos.',
+      )
+
+      return
+    }
+
+    if (!clienteEncontrado) {
+      if (!nomeLimpo) {
+        alert(
+          'Introduza o nome do cliente.',
+        )
+
+        return
+      }
+
+      if (!distritoLimpo) {
+        alert(
+          'Selecione o distrito.',
+        )
+
+        return
+      }
+
+      if (!bairroLimpo) {
+        alert(
+          'Selecione o bairro.',
+        )
+
+        return
+      }
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | GEOLOCALIZAÇÃO DO CLIENTE
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      typeof navigator ===
+        'undefined' ||
+      !navigator.geolocation
+    ) {
+      alert(
+        'O seu navegador não suporta geolocalização.',
+      )
+
       return
     }
 
     setEstaAProcessar(true)
 
-    // ==============================
-    // LOCALIZAÇÃO
-    // ==============================
-
-    if (
-      latitude === null ||
-      longitude === null
-    ) {
-      alert(
-        'Não foi possível obter a localização do cliente.'
-      )
-
-      setEstaAProcessar(false)
-
-      return
-    }
-
-    // ==============================
-    // ENCONTRAR ENTREGADOR MAIS PRÓXIMO
-    // ==============================
-
-    const entregadoresOnline =
-      ENTREGADORES.filter(
-        e => e.online
-      )
-
-    if (entregadoresOnline.length === 0) {
-      alert(
-        'Não existem entregadores disponíveis neste momento.'
-      )
-
-      setEstaAProcessar(false)
-
-      return
-    }
-
-    const entregador =
-      entregadoresOnline.reduce(
-        (maisProximo, atual) => {
-
-          const distanciaAtual =
-            calcularDistancia(
-              latitude,
-              longitude,
-              atual.latitude,
-              atual.longitude
-            )
-
-          const distanciaMaisProximo =
-            calcularDistancia(
-              latitude,
-              longitude,
-              maisProximo.latitude,
-              maisProximo.longitude
-            )
-
-          return distanciaAtual <
-            distanciaMaisProximo
-            ? atual
-            : maisProximo
-        }
-      )
-
-    setEntregadorSorteado(entregador)
-
-    // ==============================
-    // GOOGLE SCRIPT
-    // ==============================
-
     try {
-
-      const URL_GOOGLE_SCRIPT =
-        'https://script.google.com/macros/s/AKfycbxd9REX_kb3el5gArZWfjQEHrgeBdNyFkmsjYA46-wnbDMMVYiWtpeschxB-7H-1m-Q/exec'
-
-      await fetch(
-        URL_GOOGLE_SCRIPT,
-        {
-          method: 'POST',
-
-          mode: 'no-cors',
-
-          headers: {
-            'Content-Type':
-              'application/json'
+      const posicao =
+        await new Promise<GeolocationPosition>(
+          (
+            resolve,
+            reject,
+          ) => {
+            navigator.geolocation.getCurrentPosition(
+              resolve,
+              reject,
+              {
+                enableHighAccuracy:
+                  true,
+                timeout: 15000,
+                maximumAge: 0,
+              },
+            )
           },
+        )
 
-          body: JSON.stringify({
+      const latitude =
+        posicao.coords.latitude
 
-            nome,
+      const longitude =
+        posicao.coords.longitude
 
-            distrito,
+      /*
+      |--------------------------------------------------------------------------
+      | ENTREGADORES VINDOS DO BANCO
+      |--------------------------------------------------------------------------
+      */
 
-            bairro,
+      if (
+        carregandoEntregadores
+      ) {
+        throw new Error(
+          'Ainda estamos a carregar os entregadores. Tente novamente.',
+        )
+      }
 
-            telefone,
+      if (
+        entregadores.length === 0
+      ) {
+        throw new Error(
+          'Não existem entregadores activos registados no sistema.',
+        )
+      }
 
-            detalhes:
-              discriminacaoItens
-                .map(
-                  i =>
-                    `${i.quantidade}x ${i.label}`
-                )
-                .join(', '),
+      /*
+      |--------------------------------------------------------------------------
+      | PROCURAR ENTREGADORES COM GPS
+      |--------------------------------------------------------------------------
+      */
 
-            peso:
-              `${pesoTotalKg.toFixed(1)} KG`,
+      const entregadoresComDistancia =
+        entregadores
+          .map((entregador) => {
+            const latitudeEntregador =
+              Number(
+                entregador.latitude,
+              )
+
+            const longitudeEntregador =
+              Number(
+                entregador.longitude,
+              )
+
+            if (
+              !Number.isFinite(
+                latitudeEntregador,
+              ) ||
+              !Number.isFinite(
+                longitudeEntregador,
+              )
+            ) {
+              return null
+            }
+
+            return {
+              entregador,
+              distancia:
+                calcularDistancia(
+                  latitude,
+                  longitude,
+                  latitudeEntregador,
+                  longitudeEntregador,
+                ),
+            }
+          })
+          .filter(
+            (
+              item,
+            ): item is {
+              entregador: Entregador
+              distancia: number
+            } =>
+              item !== null,
+          )
+
+      let entregador: Entregador
+
+      /*
+      |--------------------------------------------------------------------------
+      | SE EXISTIR GPS
+      |--------------------------------------------------------------------------
+      |
+      | Selecionamos o entregador mais próximo.
+      |
+      */
+
+      if (
+        entregadoresComDistancia.length >
+        0
+      ) {
+        entregadoresComDistancia.sort(
+          (a, b) =>
+            a.distancia -
+            b.distancia,
+        )
+
+        entregador =
+          entregadoresComDistancia[0]
+            .entregador
+      } else {
+        /*
+        |--------------------------------------------------------------------------
+        | SEM GPS
+        |--------------------------------------------------------------------------
+        |
+        | A API atual só fornece:
+        | id, nome e telefone.
+        |
+        | Portanto não tentamos inventar
+        | uma localização.
+        |
+        | Selecionamos um entregador
+        | disponível da lista.
+        |
+        */
+
+        const indice =
+          Math.floor(
+            Math.random() *
+              entregadores.length,
+          )
+
+        entregador =
+          entregadores[indice]
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | GUARDAR VISUALMENTE O ENTREGADOR
+      |--------------------------------------------------------------------------
+      */
+
+      setEntregadorSorteado({
+        nome:
+          entregador.nome,
+
+        foto:
+          entregador.foto ??
+          undefined,
+      })
+
+      /*
+      |--------------------------------------------------------------------------
+      | ITENS DA COMPRA
+      |--------------------------------------------------------------------------
+      */
+
+      const itensCompra =
+        discriminacaoItens().map(
+          (item) => ({
+            produtoNome:
+              item.label,
+
+            quantidade:
+              item.quantidade,
+
+            precoUnitario:
+              item.precoUnitario,
+
+            desconto: 0,
 
             total:
-              formataPreco(totalAPagar),
+              item.preco,
+          }),
+        )
 
-            entregador:
-              entregador.nome,
+      /*
+      |--------------------------------------------------------------------------
+      | PAYLOAD
+      |--------------------------------------------------------------------------
+      */
 
-            latitude,
+      const payload = {
+        nome:
+          nomeLimpo,
 
-            longitude
+        telefone:
+          telefoneNormalizado,
 
-          })
-        }
+        distrito:
+          distritoLimpo,
+
+        bairro:
+          bairroLimpo,
+
+        latitude,
+
+        longitude,
+
+        entregadorNome:
+          entregador.nome,
+
+        entregadorTelefone:
+          entregador.telefone ??
+          null,
+
+        subtotal:
+          valorTotalCarrinho,
+
+        desconto,
+
+        taxaEntrega,
+
+        total:
+          totalAPagar,
+
+        quantidadeTotalKg:
+          pesoTotalKg,
+
+        itens:
+          itensCompra,
+      }
+
+      console.log(
+        'ENVIANDO COMPRA:',
+        payload,
       )
 
-    } catch (error) {
+      /*
+      |--------------------------------------------------------------------------
+      | GRAVAR COMPRA
+      |--------------------------------------------------------------------------
+      */
 
-      console.error(
-        'Erro ao reportar linha e enviar email:',
-        error
-      )
+      const resposta =
+        await fetch(
+          '/api/compras',
+          {
+            method: 'POST',
 
-    } finally {
+            headers: {
+              'Content-Type':
+                'application/json',
+            },
+
+            body: JSON.stringify(
+              payload,
+            ),
+          },
+        )
+
+      const texto =
+        await resposta.text()
+
+      let dados: any = null
+
+      try {
+        dados = texto
+          ? JSON.parse(texto)
+          : null
+      } catch {
+        dados = null
+      }
+
+      if (!resposta.ok) {
+        throw new Error(
+          dados?.mensagem ||
+            dados?.error ||
+            `Erro ao criar pedido (${resposta.status}).`,
+        )
+      }
+
+      if (
+        dados &&
+        dados.sucesso === false
+      ) {
+        throw new Error(
+          dados.mensagem ||
+            'A compra não foi registada.',
+        )
+      }
 
       setSucesso(true)
+    } catch (erro) {
+      console.error(
+        'ERRO AO FINALIZAR PEDIDO:',
+        erro,
+      )
 
+      alert(
+        erro instanceof Error
+          ? erro.message
+          : 'Não foi possível finalizar o pedido.',
+      )
+
+      setEntregadorSorteado(null)
+    } finally {
       setEstaAProcessar(false)
-
-      setTimeout(() => {
-        fecharETodosCamposZerar()
-      }, 7000)
     }
   }
 
-  // ==============================
-  // RESET
-  // ==============================
+  /*
+  |--------------------------------------------------------------------------
+  | CONSULTA AUTOMÁTICA DO CLIENTE
+  |--------------------------------------------------------------------------
+  */
 
-  const fecharETodosCamposZerar = () => {
+  useEffect(() => {
+    const telefoneNormalizado =
+      telefone.replace(/\D/g, '')
 
-    setFormularioAberto(false)
+    if (
+      telefoneNormalizado.length !== 9
+    ) {
+      setClienteConsultado(false)
+      setClienteEncontrado(false)
 
-    setSucesso(false)
-
-    setEstaAProcessar(false)
-
-    setNome('')
-
-    setDistrito('')
-
-    setBairro('')
-
-    setTelefone('')
-
-    setEntregadorSorteado(null)
-
-    if (aoLimparCarrinho) {
-      aoLimparCarrinho()
+      return
     }
 
-    if (aoResetarCatalogo) {
-      aoResetarCatalogo()
+    let cancelado = false
+
+    async function consultarAutomaticamente() {
+      if (cancelado) {
+        return
+      }
+
+      await procurarCliente(
+        telefoneNormalizado,
+      )
     }
-  }
 
-  // ==============================
-  // BAIRROS
-  // ==============================
+    const temporizador =
+      window.setTimeout(
+        consultarAutomaticamente,
+        350,
+      )
 
-  const bairrosPorDistrito: Record<
-    string,
-    string[]
-  > = {
+    return () => {
+      cancelado = true
 
-    KaMpfumo: [
-      'Alto Maé A',
-      'Alto Maé B',
-      'Central A',
-      'Central B',
-      'Central C',
-      'Coop',
-      'Malhangalene A',
-      'Malhangalene B',
-      'Polana-Cimento A',
-      'Polana-Cimento B',
-      'Sommerschield'
-    ],
+      window.clearTimeout(
+        temporizador,
+      )
+    }
+  }, [telefone])
 
-    Nhlamankulu: [
-      'Aeroporto A',
-      'Aeroporto B',
-      'Chamanculo A',
-      'Chamanculo B',
-      'Chamanculo C',
-      'Chamanculo D',
-      'Malanga',
-      'Minkadjuine',
-      'Munhuana',
-      'Unidade 7',
-      'Xipamanine'
-    ],
+  /*
+  |--------------------------------------------------------------------------
+  | CARRINHO VAZIO
+  |--------------------------------------------------------------------------
+  */
 
-    KaMaxakeni: [
-      'Mafalala',
-      'Maxaquene A',
-      'Maxaquene B',
-      'Maxaquene C',
-      'Maxaquene D',
-      'Polana Caniço A',
-      'Polana Caniço B',
-      'Urbanização'
-    ],
-
-    KaMavota: [
-      'Albasini',
-      'Costa do Sol',
-      'F.P.L.M.',
-      'Hulene A',
-      'Hulene B',
-      'Laulane',
-      'Mahotas',
-      'Mavalane A',
-      'Mavalane B',
-      'Pescadores',
-      'Triângulo'
-    ],
-
-    KaMubukwana: [
-      'Bagamoyo',
-      'George Dimitrov (Benfica)',
-      'Inhagoia A',
-      'Inhagoia B',
-      'Jardim',
-      'Luís Cabral',
-      'Magoanine A',
-      'Magoanine B',
-      'Magoanine C',
-      'Malhazine',
-      'Zimpeto'
-    ],
-
-    KaTembe: [
-      'Chali',
-      'Chamissava',
-      'Guachene',
-      'Incassane',
-      'Inguide'
-    ],
-
-    KaNyaka: [
-      'Ingwane',
-      'Nhaquene',
-      'Ribjene'
-    ],
-
-    'Matola-Sede': [
-      'Centro da Cidade',
-      'Fomento',
-      'Liberdade',
-      'Malhampsene',
-      'Mussumbuluco',
-      'Ndlavela',
-      'Sikwama',
-      'Tchumene 1',
-      'Tchumene 2',
-      'Tchumene 3'
-    ],
-
-    Machava: [
-      'Bunhiça',
-      'Infulene A',
-      'KM 15',
-      'Machava Bedene',
-      'Machava Sede',
-      'Machava Socimol',
-      'Matola Gare',
-      'Trevo'
-    ],
-
-    Infulene: [
-      'Boquisso A',
-      'Boquisso B',
-      'Intaka',
-      'Kongolote',
-      'T3',
-      'Vale do Infulene'
-    ],
-
-    Boane: [
-      'Boane Sede',
-      'Campoane',
-      'Eduardo Mondlane',
-      'Gueguegue',
-      'Matola-Rio',
-      'Mazzarello'
-    ],
-
-    Marracuene: [
-      'Marracuene Sede',
-      'Bairro Cumbeza',
-      'Jardim das Oliveiras',
-      'Mali',
-      'Michafutene',
-      'Ricatla'
-    ]
-  }
-
-  // ==============================
-  // INTERFACE
-  // ==============================
-
-    if (totalItensCarrinho === 0) {
+  if (totalItensCarrinho <= 0) {
     return null
   }
 
+  /*
+  |--------------------------------------------------------------------------
+  | RENDER
+  |--------------------------------------------------------------------------
+  */
 
   return (
+    <>
+      {/* =====================================================
+          CARRINHO
+      ====================================================== */}
 
-    <div
-      className="
-        mt-11
-        border border-white/10
-        rounded-xl
-        p-5
-        flex flex-col
-        h-full
-        min-h-0
-        shadow-2xl
-        relative
-        overflow-hidden
-        text-white
-        bg-cover
-        bg-center
-        bg-no-repeat
-      "
-       style={{
-    backgroundImage: "url('/castanha_familia.jpeg')"
-  }}
-    >
+      <div className="w-full overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
 
-      {/* ==============================
-          FUNDO ESCURO
-      ============================== */}
-
-      <div
-        className="
-          absolute
-          inset-0
-          bg-black/70
-          backdrop-blur-[1px]
-          z-0
-        "
-      />
-
-      {/* ==============================
-          CONTEÚDO
-      ============================== */}
-
-      <div
-        className="
-          relative
-          z-10
-          flex
-          flex-col
-          h-full
-          min-h-0
-        "
-      >
-
-        {/* ==============================
+        {/* ===================================================
             CABEÇALHO
-        ============================== */}
+        ==================================================== */}
 
-        <div
-          className="
-            flex
-            items-center
-            justify-between
-            border-b
-            border-white/10
-            pb-3.5
-            shrink-0
-          "
-        >
+        <div className="relative h-40 overflow-hidden">
 
-          <h2
-            className="
-              text-sm
-              font-black
-              text-gray-200
-              tracking-wider
-              uppercase
-            "
-          >
-            Carrinha de Compras
-          </h2>
+          <img
+            src="/castanha_familia.jpeg"
+            alt="Carrinho de compras"
+            className="h-full w-full object-cover"
+          />
 
-          {totalItensCarrinho > 0 && (
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-transparent" />
 
-            <span
-              className="
-                text-xs
-                bg-amber-500/10
-                border
-                border-amber-500/20
-                px-2.5
-                py-1
-                rounded-full
-                font-black
-                text-amber-500
-              "
-            >
-              {pesoTotalKg.toFixed(1)} KG Total
-            </span>
+          <div className="absolute inset-0 flex items-center justify-between p-5">
 
-          )}
+            <div>
 
-        </div>
+              <div className="flex items-center gap-2 text-white">
 
-        {/* ==============================
-            DESCONTO
-        ============================== */}
+                <ShoppingCart
+                  size={24}
+                />
 
-        <div
-          className="
-            mt-4
-            space-y-2.5
-            shrink-0
-            text-xs
-          "
-        >
+                <h2 className="text-2xl font-black">
+                  Carrinha de Compras
+                </h2>
 
-          <div
-            className="
-              bg-emerald-500/10
-              border
-              border-emerald-500/20
-              rounded-xl
-              p-3
-              text-emerald-400
-              backdrop-blur-sm
-            "
-          >
+              </div>
 
-            <p
-              className="
-                font-black
-                text-sm
-              "
-            >
-              Desconto de Grossista:
-            </p>
-
-            <p
-              className="
-                text-gray-300
-                mt-1
-                text-[11px]
-              "
-            >
-              Compre{' '}
-
-              <span
-                className="
-                  text-emerald-400
-                  font-bold
-                "
-              >
-                10 ou mais copos
-              </span>{' '}
-
-              no total e ganhe{' '}
-
-              <span
-                className="
-                  text-emerald-300
-                  font-black
-                "
-              >
-                5% de desconto
-              </span>.
-            </p>
-
-          </div>
-
-        </div>
-
-        {/* ==============================
-            ITENS
-        ============================== */}
-
-        <div
-          className="
-            flex-1
-            overflow-y-auto
-            my-4
-            space-y-2
-            pr-1
-            min-h-[100px]
-          "
-        >
-
-          {discriminacaoItens.length === 0 ? (
-
-            <div
-              className="
-                h-full
-                flex
-                flex-col
-                items-center
-                justify-center
-                text-center
-                p-4
-              "
-            >
-
-              <p
-                className="
-                  text-sm
-                  text-gray-400
-                  font-bold
-                "
-              >
-                Nenhum produto na carrinha
+              <p className="mt-1 text-sm text-white/80">
+                {totalItensCarrinho}{' '}
+                {totalItensCarrinho === 1
+                  ? 'item'
+                  : 'itens'}{' '}
+                no carrinho
               </p>
 
             </div>
 
-          ) : (
-
-            discriminacaoItens.map(
-              (item, index) => (
-
-                <div
-                  key={index}
-                  className="
-                    flex
-                    justify-between
-                    items-center
-                    p-3.5
-                    bg-black/30
-                    rounded-xl
-                    border
-                    border-white/10
-                    backdrop-blur-sm
-                  "
-                >
-
-                  <div>
-
-                    <h4
-                      className="
-                        text-sm
-                        font-black
-                        text-white
-                        tracking-tight
-                      "
-                    >
-                      Castanha Caju
-                    </h4>
-
-                    <span
-                      className="
-                        text-xs
-                        text-amber-500
-                        font-black
-                        block
-                        mt-1
-                      "
-                    >
-                      {item.quantidade}x {item.label}
-                    </span>
-
-                  </div>
-
-                  <span
-                    className="
-                      text-sm
-                      font-black
-                      text-amber-500
-                    "
-                  >
-                    {formataPreco(item.preco)} MT
-                  </span>
-
-                </div>
-
-              )
-            )
-
-          )}
-
-        </div>
-
-        {/* ==============================
-            TOTAL
-        ============================== */}
-
-        <div
-          className="
-            border-t
-            border-white/10
-            pt-4
-            space-y-3
-            shrink-0
-            text-sm
-          "
-        >
-
-          {aplicaDesconto && (
-
-            <div
-              className="
-                flex
-                justify-between
-                text-emerald-400
-                font-bold
-                bg-emerald-500/5
-                px-2.5
-                py-1.5
-                rounded-lg
-                text-xs
-                items-center
-              "
+            <button
+              type="button"
+              onClick={() =>
+                aoLimparCarrinho?.()
+              }
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white backdrop-blur transition hover:bg-white/25"
+              aria-label="Limpar carrinho"
             >
-
-              <span
-                className="
-                  flex
-                  items-center
-                  gap-1.5
-                "
-              >
-
-                <Tag
-                  className="
-                    w-3.5
-                    h-3.5
-                  "
-                />
-
-                Desconto (5%):
-
-              </span>
-
-              <span
-                className="
-                  font-black
-                "
-              >
-                -{formataPreco(desconto)} MT
-              </span>
-
-            </div>
-
-          )}
-
-          <div
-            className="
-              flex
-              justify-between
-              items-center
-              pt-3
-              border-t
-              border-white/10
-            "
-          >
-
-            <span
-              className="
-                text-base
-                font-black
-                text-white
-              "
-            >
-              Total a Pagar:
-            </span>
-
-            <span
-              className="
-                text-lg
-                font-black
-                text-amber-500
-                tracking-wide
-              "
-            >
-              {formataPreco(totalAPagar)} MT
-            </span>
+              <X size={20} />
+            </button>
 
           </div>
 
         </div>
 
-        {/* ==============================
-            BOTÃO CONFIRMAR
-        ============================== */}
+        {/* ===================================================
+            CONTEÚDO
+        ==================================================== */}
 
-        <button
-          disabled={totalItensCarrinho === 0}
-          onClick={() => setFormularioAberto(true)}
-          className="
-            w-full
-            mt-4
-            py-3.5
-            bg-[#009966]
-            hover:bg-[#008055]
-            text-white
-            font-black
-            rounded-xl
-            text-sm
-            uppercase
-            tracking-wider
-            disabled:opacity-40
-            transition-all
-            shrink-0
-            shadow-lg
-          "
-        >
-          Confirmar e Fechar Pedido
-        </button>
+        <div className="p-5">
 
-        {/* ==============================
-            FORMULÁRIO
-        ============================== */}
+          {/* PESO / DESCONTO */}
 
-        {formularioAberto && (
+          <div className="flex items-center justify-between rounded-2xl bg-slate-50 p-4">
 
-          <div
-            className="
-              absolute
-              inset-0
-              bg-black/85
-              backdrop-blur-md
-              z-20
-              flex
-              flex-col
-              p-5
-              overflow-y-auto
-            "
-          >
+            <div className="flex items-center gap-3">
 
-            {/* CABEÇALHO FORMULÁRIO */}
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
 
-            <div
-              className="
-                flex
-                justify-between
-                items-center
-                shrink-0
-                mb-4
-              "
-            >
-
-              <h3
-                className="
-                  text-sm
-                  font-black
-                  uppercase
-                  tracking-wider
-                  text-gray-200
-                "
-              >
-                Dados de Entrega
-              </h3>
-
-              <button
-                type="button"
-                onClick={fecharETodosCamposZerar}
-                className="
-                  text-gray-400
-                  hover:text-white
-                  p-1
-                  rounded-lg
-                  hover:bg-white/5
-                  transition-colors
-                "
-              >
-
-                <X
-                  className="
-                    w-5
-                    h-5
-                  "
+                <Tag
+                  size={20}
+                  className="text-emerald-600"
                 />
-
-              </button>
-
-            </div>
-
-            {!sucesso ? (
-
-              <form
-                onSubmit={gerirSubmissao}
-                className="
-                  flex-1
-                  flex
-                  flex-col
-                  justify-between
-                  space-y-4
-                "
-              >
-
-                <div
-                  className="
-                    space-y-4
-                  "
-                >
-
-                  {/* NOME */}
-
-                  <div>
-
-                    <label
-                      className="
-                        block
-                        text-xs
-                        font-bold
-                        text-gray-400
-                        mb-1.5
-                        uppercase
-                      "
-                    >
-                      Nome Completo
-                    </label>
-
-                    <div
-                      className="
-                        relative
-                      "
-                    >
-
-                      <User
-                        className="
-                          absolute
-                          left-3
-                          top-1/2
-                          -translate-y-1/2
-                          w-4
-                          h-4
-                          text-gray-500
-                        "
-                      />
-
-                      <input
-                        type="text"
-                        required
-                        value={nome}
-                        onChange={(e) =>
-                          setNome(e.target.value)
-                        }
-                        placeholder="Ex: João Sitoe"
-                        className="
-                          w-full
-                          bg-black/50
-                          border
-                          border-white/10
-                          rounded-xl
-                          py-3
-                          pl-10
-                          pr-4
-                          text-sm
-                          text-white
-                          focus:outline-none
-                          focus:border-[#009966]
-                          transition-colors
-                        "
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* DISTRITO */}
-
-                  <div>
-
-                    <label
-                      className="
-                        block
-                        text-xs
-                        font-bold
-                        text-gray-400
-                        mb-1.5
-                        uppercase
-                      "
-                    >
-                      Distrito
-                    </label>
-
-                    <div
-                      className="
-                        relative
-                      "
-                    >
-
-                      <MapPin
-                        className="
-                          absolute
-                          left-3
-                          top-1/2
-                          -translate-y-1/2
-                          w-4
-                          h-4
-                          text-gray-500
-                          z-10
-                        "
-                      />
-
-                      <select
-                        required
-                        value={distrito}
-                        onChange={(e) => {
-
-                          setDistrito(
-                            e.target.value
-                          )
-
-                          setBairro('')
-
-                        }}
-                        className="
-                          w-full
-                          bg-black
-                          border
-                          border-white/10
-                          rounded-xl
-                          py-3
-                          pl-10
-                          pr-4
-                          text-sm
-                          text-white
-                          focus:outline-none
-                          focus:border-[#009966]
-                          transition-colors
-                          appearance-none
-                          cursor-pointer
-                        "
-                      >
-
-                        <option
-                          value=""
-                          disabled
-                          hidden
-                        >
-                          Selecione o Distrito
-                        </option>
-
-                        <optgroup
-                          label="Cidade de Maputo (Distritos Municipais)"
-                          className="
-                            bg-[#161616]
-                            text-gray-300
-                          "
-                        >
-
-                          <option value="KaMpfumo">
-                            KaMpfumo (DM1)
-                          </option>
-
-                          <option value="Nhlamankulu">
-                            Nhlamankulu (DM2)
-                          </option>
-
-                          <option value="KaMaxakeni">
-                            KaMaxakeni (DM3)
-                          </option>
-
-                          <option value="KaMavota">
-                            KaMavota (DM4)
-                          </option>
-
-                          <option value="KaMubukwana">
-                            KaMubukwana (DM5)
-                          </option>
-
-                          <option value="KaTembe">
-                            KaTembe (DM6)
-                          </option>
-
-                          <option value="KaNyaka">
-                            KaNyaka (DM7)
-                          </option>
-
-                        </optgroup>
-
-                        <optgroup
-                          label="Província de Maputo"
-                          className="
-                            bg-[#161616]
-                            text-gray-300
-                          "
-                        >
-
-                          <option value="Matola-Sede">
-                            Matola (Posto Sede)
-                          </option>
-
-                          <option value="Machava">
-                            Matola (Posto da Machava)
-                          </option>
-
-                          <option value="Infulene">
-                            Matola (Posto do Infulene)
-                          </option>
-
-                          <option value="Boane">
-                            Boane
-                          </option>
-
-                          <option value="Marracuene">
-                            Marracuene
-                          </option>
-
-                        </optgroup>
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* BAIRRO */}
-
-                  <div>
-
-                    <label
-                      className="
-                        block
-                        text-xs
-                        font-bold
-                        text-gray-400
-                        mb-1.5
-                        uppercase
-                      "
-                    >
-                      Bairro
-                    </label>
-
-                    <div
-                      className="
-                        relative
-                      "
-                    >
-
-                      <MapPin
-                        className="
-                          absolute
-                          left-3
-                          top-1/2
-                          -translate-y-1/2
-                          w-4
-                          h-4
-                          text-gray-500
-                          z-10
-                        "
-                      />
-
-                      <select
-                        required
-                        disabled={!distrito}
-                        value={bairro}
-                        onChange={(e) =>
-                          setBairro(
-                            e.target.value
-                          )
-                        }
-                        className="
-                          w-full
-                          bg-black
-                          border
-                          border-white/10
-                          rounded-xl
-                          py-3
-                          pl-10
-                          pr-4
-                          text-sm
-                          text-white
-                          focus:outline-none
-                          focus:border-[#009966]
-                          transition-colors
-                          appearance-none
-                          cursor-pointer
-                          disabled:opacity-40
-                        "
-                      >
-
-                        <option
-                          value=""
-                          disabled
-                          hidden
-                        >
-                          {distrito
-                            ? 'Selecione o Bairro'
-                            : 'Selecione primeiro o Distrito'}
-                        </option>
-
-                        {(
-                          bairrosPorDistrito[
-                            distrito
-                          ] || []
-                        ).map(
-                          (nomeBairro) => (
-
-                            <option
-                              key={nomeBairro}
-                              value={nomeBairro}
-                              className="
-                                bg-[#161616]
-                              "
-                            >
-                              {nomeBairro}
-                            </option>
-
-                          )
-                        )}
-
-                      </select>
-
-                    </div>
-
-                  </div>
-
-                  {/* TELEFONE */}
-
-                  <div>
-
-                    <label
-                      className="
-                        block
-                        text-xs
-                        font-bold
-                        text-gray-400
-                        mb-1.5
-                        uppercase
-                      "
-                    >
-                      Contacto WhatsApp
-                    </label>
-
-                    <div
-                      className="
-                        relative
-                      "
-                    >
-
-                      <Phone
-                        className="
-                          absolute
-                          left-3
-                          top-1/2
-                          -translate-y-1/2
-                          w-4
-                          h-4
-                          text-gray-500
-                        "
-                      />
-
-                      <input
-                        type="tel"
-                        required
-                        pattern="^(82|83|84|85|86|87)\d{7}$"
-                        maxLength={9}
-                        value={telefone}
-                        onChange={(e) =>
-                          setTelefone(
-                            e.target.value
-                              .replace(/\D/g, '')
-                          )
-                        }
-                        placeholder="Ex: 847059112"
-                        className="
-                          w-full
-                          bg-black/50
-                          border
-                          border-white/10
-                          rounded-xl
-                          py-3
-                          pl-10
-                          pr-4
-                          text-sm
-                          text-white
-                          focus:outline-none
-                          focus:border-[#009966]
-                          transition-colors
-                          invalid:border-red-500/50
-                        "
-                      />
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-                {/* BOTÃO ENVIAR */}
-
-                <button
-                  type="submit"
-                  disabled={estaAProcessar}
-                  className="
-                    w-full
-                    py-3.5
-                    bg-[#009966]
-                    hover:bg-[#008055]
-                    text-white
-                    font-black
-                    rounded-xl
-                    text-sm
-                    uppercase
-                    tracking-wider
-                    disabled:opacity-40
-                    transition-all
-                    mt-4
-                    shadow-lg
-                  "
-                >
-                  {estaAProcessar
-                    ? 'A processar pedido...'
-                    : 'Confirmar e Enviar Pedido'}
-                </button>
-
-              </form>
-
-            ) : (
-
-              /* ==============================
-                 SUCESSO
-              ============================== */
-
-              <div
-                className="
-                  flex-1
-                  flex
-                  flex-col
-                  items-center
-                  justify-center
-                  text-center
-                  p-6
-                  space-y-4
-                "
-              >
-
-                <CheckCircle
-                  className="
-                    w-14
-                    h-14
-                    text-emerald-500
-                    shrink-0
-                  "
-                />
-
-                <h4
-                  className="
-                    text-lg
-                    font-black
-                    text-white
-                  "
-                >
-                  Pedido Enviado com Sucesso!
-                </h4>
-
-                <p
-                  className="
-                    text-xs
-                    text-gray-400
-                    max-w-[250px]
-                  "
-                >
-                  O seu pedido foi recebido e o
-                  processamento foi iniciado.
-                </p>
-
-                {entregadorSorteado && (
-
-                  <div
-                    className="
-                      mt-4
-                      p-4
-                      bg-black/40
-                      border
-                      border-white/10
-                      rounded-xl
-                      flex
-                      flex-col
-                      items-center
-                      w-full
-                      max-w-[280px]
-                      backdrop-blur-sm
-                    "
-                  >
-
-                    <p
-                      className="
-                        text-[10px]
-                        font-bold
-                        uppercase
-                        text-amber-500
-                        tracking-wider
-                        mb-2
-                      "
-                    >
-                      Entregador Responsável
-                    </p>
-
-                    <img
-                      src={
-                        entregadorSorteado.foto
-                      }
-                      alt={
-                        entregadorSorteado.nome
-                      }
-                      className="
-                        w-16
-                        h-16
-                        rounded-full
-                        border-2
-                        border-[#009966]
-                        object-cover
-                        shadow-md
-                        mb-2
-                      "
-                    />
-
-                    <span
-                      className="
-                        text-sm
-                        font-black
-                        text-white
-                        tracking-tight
-                      "
-                    >
-                      {
-                        entregadorSorteado.nome
-                      }
-                    </span>
-
-                    <span
-                      className="
-                        text-[10px]
-                        text-gray-500
-                        mt-0.5
-                      "
-                    >
-                      A preparar a rota de despacho...
-                    </span>
-
-                  </div>
-
-                )}
-
-                <button
-                  type="button"
-                  onClick={
-                    fecharETodosCamposZerar
-                  }
-                  className="
-                    mt-4
-                    px-6
-                    py-2.5
-                    bg-white/5
-                    border
-                    border-white/10
-                    hover:bg-white/10
-                    text-white
-                    rounded-xl
-                    text-xs
-                    font-bold
-                    transition-all
-                  "
-                >
-                  Fechar Janela
-                </button>
 
               </div>
 
+              <div>
+
+                <p className="text-xs text-slate-500">
+                  Peso total
+                </p>
+
+                <p className="font-bold text-slate-900">
+                  {pesoTotalKg.toFixed(1)} kg
+                </p>
+
+              </div>
+
+            </div>
+
+            {desconto > 0 && (
+              <div className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+                -5% desconto
+              </div>
             )}
 
           </div>
 
-        )}
+          {/* =================================================
+              ITENS
+          ================================================== */}
+
+          <div className="mt-4 space-y-2">
+
+            {discriminacaoItens().map(
+              (item, index) => (
+                <div
+                  key={`${item.label}-${index}`}
+                  className="flex items-center justify-between rounded-xl border border-slate-100 px-4 py-3"
+                >
+
+                  <div>
+
+                    <p className="font-semibold text-slate-800">
+                      {item.label}
+                    </p>
+
+                    <p className="text-xs text-slate-500">
+                      {item.quantidade}{' '}
+                      unidade
+                      {item.quantidade !== 1
+                        ? 's'
+                        : ''}
+                    </p>
+
+                  </div>
+
+                  <p className="font-bold text-slate-900">
+
+                    {item.preco.toLocaleString(
+                      'pt-MZ',
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      },
+                    )}{' '}
+                    MT
+
+                  </p>
+
+                </div>
+              ),
+            )}
+
+          </div>
+
+          {/* =================================================
+              RESUMO
+          ================================================== */}
+
+          <div className="mt-5 border-t border-slate-200 pt-4">
+
+            <div className="flex justify-between text-sm text-slate-600">
+
+              <span>
+                Subtotal
+              </span>
+
+              <span>
+                {valorTotalCarrinho.toLocaleString(
+                  'pt-MZ',
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  },
+                )}{' '}
+                MT
+              </span>
+
+            </div>
+
+            {desconto > 0 && (
+              <div className="mt-2 flex justify-between text-sm text-emerald-600">
+
+                <span>
+                  Desconto
+                </span>
+
+                <span>
+                  -
+                  {desconto.toLocaleString(
+                    'pt-MZ',
+                    {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    },
+                  )}{' '}
+                  MT
+                </span>
+
+              </div>
+            )}
+
+            <div className="mt-3 flex items-end justify-between">
+
+              <span className="text-sm font-semibold text-slate-600">
+                Total a pagar
+              </span>
+
+              <span className="text-2xl font-black text-emerald-600">
+                {totalAPagar.toLocaleString(
+                  'pt-MZ',
+                  {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  },
+                )}{' '}
+                MT
+              </span>
+
+            </div>
+
+          </div>
+
+          {/* =================================================
+              CONFIRMAR
+          ================================================== */}
+
+          <button
+            type="button"
+            onClick={abrirFormulario}
+            className="mt-5 flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-5 py-4 font-black text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700 active:scale-[0.99]"
+          >
+
+            <CheckCircle
+              size={21}
+            />
+
+            Confirmar e Fechar Pedido
+
+          </button>
+
+        </div>
 
       </div>
 
-    </div>
+      {/* =====================================================
+          FORMULÁRIO
+      ====================================================== */}
+
+      <FormularioEntrega
+        formularioAberto={
+          formularioAberto
+        }
+
+        sucesso={
+          sucesso
+        }
+
+        nome={
+          nome
+        }
+
+        distrito={
+          distrito
+        }
+
+        bairro={
+          bairro
+        }
+
+        telefone={
+          telefone
+        }
+
+        setNome={
+          setNome
+        }
+
+        setDistrito={
+          setDistrito
+        }
+
+        setBairro={
+          setBairro
+        }
+
+        setTelefone={(valor) => {
+          const apenasNumeros =
+            valor
+              .replace(/\D/g, '')
+              .slice(0, 9)
+
+          setTelefone(
+            apenasNumeros,
+          )
+
+          if (
+            apenasNumeros.length !== 9
+          ) {
+            setClienteConsultado(false)
+            setClienteEncontrado(false)
+          }
+        }}
+
+        clienteEncontrado={
+          clienteEncontrado
+        }
+
+        clienteConsultado={
+          clienteConsultado
+        }
+
+        aProcurarCliente={
+          aProcurarCliente
+        }
+
+        procurarCliente={
+          procurarCliente
+        }
+
+        gerirSubmissao={
+          gerirSubmissao
+        }
+
+        fecharFormulario={
+          fecharFormulario
+        }
+
+        finalizarSucesso={
+          finalizarSucesso
+        }
+
+        estaAProcessar={
+          estaAProcessar
+        }
+
+        entregadorSorteado={
+          entregadorSorteado
+        }
+      />
+
+    </>
   )
 }

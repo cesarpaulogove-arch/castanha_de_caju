@@ -91,7 +91,7 @@ export default function Catalogo({
   // PRODUTO
   // ===================================================
 
-  const produtoIdFixo = '1'
+ const produtoIdFixo = 'castanha-caju'
 
   // ===================================================
   // QUANTIDADE

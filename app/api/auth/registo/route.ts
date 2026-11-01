@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { Perfil } from '@/generated/prisma/enums'
@@ -12,6 +13,14 @@ const PERFIS_VALIDOS: Record<string, Perfil> = {
   Transportador: Perfil.TRANSPORTADOR,
 }
 
+function normalizarTexto(valor: string) {
+  return valor.trim().replace(/\s+/g, ' ')
+}
+
+function normalizarTelefone(telefone: string) {
+  return telefone.trim().replace(/\s+/g, '')
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
@@ -20,23 +29,15 @@ export async function POST(request: Request) {
       tipo,
       nome,
       telefone,
-      email,
-      localizacao,
       senha,
+      localizacao,
     } = body
 
     // =========================
-    // VALIDAÇÃO DOS CAMPOS
+    // VALIDAR CAMPOS
     // =========================
 
-    if (
-      !tipo ||
-      !nome ||
-      !telefone ||
-      !email ||
-      !localizacao ||
-      !senha
-    ) {
+    if (!tipo || !nome || !telefone || !senha || !localizacao) {
       return NextResponse.json(
         {
           sucesso: false,
@@ -47,31 +48,17 @@ export async function POST(request: Request) {
     }
 
     // =========================
-    // VALIDAR PALAVRA-PASSE
-    // =========================
-
-    if (typeof senha !== 'string' || senha.length < 6) {
-      return NextResponse.json(
-        {
-          sucesso: false,
-          mensagem:
-            'A palavra-passe deve ter pelo menos 6 caracteres.',
-        },
-        { status: 400 }
-      )
-    }
-
-    // =========================
     // VALIDAR PERFIL
     // =========================
 
-    const perfil = PERFIS_VALIDOS[tipo]
+    const tipoNormalizado = String(tipo).trim()
+    const perfil = PERFIS_VALIDOS[tipoNormalizado]
 
     if (!perfil) {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem: 'Perfil inválido.',
+          mensagem: `Perfil inválido: ${tipoNormalizado}`,
         },
         { status: 400 }
       )
@@ -81,10 +68,10 @@ export async function POST(request: Request) {
     // NORMALIZAR DADOS
     // =========================
 
-    const nomeNormalizado = String(nome).trim()
-    const telefoneNormalizado = String(telefone).trim()
-    const emailNormalizado = String(email).trim().toLowerCase()
-    const localizacaoNormalizada = String(localizacao).trim()
+    const nomeNormalizado = normalizarTexto(String(nome))
+    const telefoneNormalizado = normalizarTelefone(String(telefone))
+    const localizacaoNormalizada = normalizarTexto(String(localizacao))
+    const senhaNormalizada = String(senha).trim()
 
     // =========================
     // VALIDAR NOME
@@ -104,25 +91,29 @@ export async function POST(request: Request) {
     // VALIDAR TELEFONE
     // =========================
 
-    if (!telefoneNormalizado) {
+    const telefoneValido = /^\+?[0-9]{9,13}$/.test(
+      telefoneNormalizado
+    )
+
+    if (!telefoneValido) {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem: 'Informe o seu telefone.',
+          mensagem: 'Informe um número de telefone válido.',
         },
         { status: 400 }
       )
     }
 
     // =========================
-    // VALIDAR EMAIL
+    // VALIDAR PIN
     // =========================
 
-    if (!emailNormalizado) {
+    if (!/^\d{4}$/.test(senhaNormalizada)) {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem: 'Informe o seu email.',
+          mensagem: 'O PIN deve conter exactamente 4 dígitos.',
         },
         { status: 400 }
       )
@@ -143,12 +134,15 @@ export async function POST(request: Request) {
     }
 
     // =========================
-    // VERIFICAR SE EMAIL JÁ EXISTE
+    // VERIFICAR TELEFONE EXISTENTE
     // =========================
 
     const usuarioExistente = await prisma.usuario.findUnique({
       where: {
-        email: emailNormalizado,
+        telefone: telefoneNormalizado,
+      },
+      select: {
+        id: true,
       },
     })
 
@@ -156,17 +150,17 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem: 'Já existe uma conta com este email.',
+          mensagem: 'Já existe uma conta com este número de telefone.',
         },
         { status: 409 }
       )
     }
 
     // =========================
-    // CRIPTOGRAFAR SENHA
+    // PROTEGER PIN COM BCRYPT
     // =========================
 
-    const senhaHash = await bcrypt.hash(senha, 12)
+    const senhaHash = await bcrypt.hash(senhaNormalizada, 12)
 
     // =========================
     // CRIAR UTILIZADOR
@@ -176,16 +170,15 @@ export async function POST(request: Request) {
       data: {
         nome: nomeNormalizado,
         telefone: telefoneNormalizado,
-        email: emailNormalizado,
         localizacao: localizacaoNormalizada,
         senha: senhaHash,
         perfil,
+        ativo: true,
       },
       select: {
         id: true,
         nome: true,
         telefone: true,
-        email: true,
         localizacao: true,
         perfil: true,
         ativo: true,
@@ -194,19 +187,33 @@ export async function POST(request: Request) {
     })
 
     // =========================
-    // RESPOSTA DE SUCESSO
+    // RESPOSTA
     // =========================
 
     return NextResponse.json(
       {
         sucesso: true,
-        mensagem: 'Conta criada com sucesso.',
+        mensagem:
+          perfil === Perfil.ENTREGADOR
+            ? 'Conta de entregador criada com sucesso.'
+            : 'Conta criada com sucesso.',
         usuario,
       },
       { status: 201 }
     )
-  } catch (error) {
+
+  } catch (error: any) {
     console.error('ERRO AO CRIAR CONTA:', error)
+
+    if (error?.code === 'P2002') {
+      return NextResponse.json(
+        {
+          sucesso: false,
+          mensagem: 'Já existe uma conta com estes dados.',
+        },
+        { status: 409 }
+      )
+    }
 
     return NextResponse.json(
       {

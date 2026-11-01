@@ -1,9 +1,21 @@
+
 export function calcularDistancia(
   latitude1: number,
   longitude1: number,
   latitude2: number,
   longitude2: number
 ): number {
+  const coordenadas = [
+    latitude1,
+    longitude1,
+    latitude2,
+    longitude2
+  ]
+
+  if (!coordenadas.every(Number.isFinite)) {
+    return Infinity
+  }
+
   const R = 6371
 
   const dLat = ((latitude2 - latitude1) * Math.PI) / 180
