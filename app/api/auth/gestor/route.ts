@@ -1,3 +1,4 @@
+
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 
@@ -6,17 +7,29 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST() {
   try {
-    const email = process.env.GESTOR_EMAIL
+    const telefone = process.env.GESTOR_TELEFONE
     const password = process.env.GESTOR_PASSWORD
 
-    if (!email || !password) {
+    if (!telefone || !password) {
       return NextResponse.json(
         {
           sucesso: false,
           mensagem:
-            'GESTOR_EMAIL e GESTOR_PASSWORD não estão configurados no .env.',
+            'GESTOR_TELEFONE e GESTOR_PASSWORD não estão configurados no .env.',
         },
         { status: 500 }
+      )
+    }
+
+    const telefoneNormalizado = telefone.replace(/\D/g, '')
+
+    if (!/^\d{9}$/.test(telefoneNormalizado)) {
+      return NextResponse.json(
+        {
+          sucesso: false,
+          mensagem: 'O número de telemóvel deve ter 9 dígitos.',
+        },
+        { status: 400 }
       )
     }
 
@@ -24,18 +37,15 @@ export async function POST() {
       return NextResponse.json(
         {
           sucesso: false,
-          mensagem:
-            'A senha do gestor deve ter pelo menos 8 caracteres.',
+          mensagem: 'A senha deve ter pelo menos 8 caracteres.',
         },
-        { status: 500 }
+        { status: 400 }
       )
     }
 
-    const emailNormalizado = email.trim().toLowerCase()
-
-    const gestorExistente = await prisma.usuario.findUnique({
+    const gestorExistente = await prisma.usuario.findFirst({
       where: {
-        email: emailNormalizado,
+        telefone: telefoneNormalizado,
       },
     })
 
@@ -45,7 +55,7 @@ export async function POST() {
           {
             sucesso: false,
             mensagem:
-              'O email configurado para o gestor já pertence a outro perfil.',
+              'Este número já pertence a uma conta com outro perfil.',
           },
           { status: 409 }
         )
@@ -62,8 +72,7 @@ export async function POST() {
     const gestor = await prisma.usuario.create({
       data: {
         nome: 'Gestor Principal',
-        email: emailNormalizado,
-        telefone: null,
+        telefone: telefoneNormalizado,
         localizacao: 'Maputo',
         senha: senhaHash,
         perfil: Perfil.GESTOR,
@@ -72,7 +81,7 @@ export async function POST() {
       select: {
         id: true,
         nome: true,
-        email: true,
+        telefone: true,
         perfil: true,
         ativo: true,
       },
