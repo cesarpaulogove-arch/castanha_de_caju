@@ -4,7 +4,6 @@ import { cookies } from 'next/headers'
 import {
   ArrowLeft,
   Truck,
-  Mail,
   Phone,
   MapPin,
   ShieldCheck,
@@ -105,7 +104,6 @@ export default async function EntregadoresPage() {
     select: {
       id: true,
       nome: true,
-      email: true,
       telefone: true,
       localizacao: true,
       ativo: true,
@@ -237,10 +235,10 @@ export default async function EntregadoresPage() {
                               </p>
 
                               <div className="mt-1 flex items-center gap-1.5 text-xs text-[#806b55]">
-                                <Mail size={13} />
+                                <Phone size={13} />
 
                                 <span>
-                                  {entregador.email}
+                                  {entregador.telefone || 'Não informado'}
                                 </span>
                               </div>
                             </div>
@@ -253,8 +251,7 @@ export default async function EntregadoresPage() {
                             <Phone size={16} />
 
                             <span>
-                              {entregador.telefone ||
-                                'Não informado'}
+                              {entregador.telefone || 'Não informado'}
                             </span>
                           </div>
                         </td>
@@ -306,4 +303,3 @@ export default async function EntregadoresPage() {
     </main>
   )
 }
-

@@ -1,10 +1,8 @@
-
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import {
   ArrowLeft,
   UserRound,
-  Mail,
   Phone,
   MapPin,
   ShieldCheck,
@@ -106,7 +104,6 @@ export default async function ProdutoresPage() {
     select: {
       id: true,
       nome: true,
-      email: true,
       telefone: true,
       localizacao: true,
       ativo: true,
@@ -441,13 +438,6 @@ export default async function ProdutoresPage() {
                                   {produtor.nome}
                                 </p>
 
-                                <div className="mt-1 flex items-center gap-1.5 text-xs text-[#806b55]">
-                                  <Mail size={13} />
-                                  <span>
-                                    {produtor.email}
-                                  </span>
-                                </div>
-
                               </div>
 
                             </div>
@@ -661,4 +651,3 @@ export default async function ProdutoresPage() {
     </main>
   )
 }
-

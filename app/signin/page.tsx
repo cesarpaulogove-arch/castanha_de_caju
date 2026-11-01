@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   LogIn,
-  Mail,
+  Phone,
   Lock,
   CheckCircle,
   ShieldCheck,
@@ -18,7 +18,7 @@ import {
 export default function SignIn() {
   const router = useRouter()
 
-  const [email, setEmail] = useState('')
+  const [telefone, setTelefone] = useState('')
   const [password, setPassword] = useState('')
 
   const [mostrarPassword, setMostrarPassword] = useState(false)
@@ -36,11 +36,11 @@ export default function SignIn() {
     setErro('')
     setSucesso(false)
 
-    const emailNormalizado = email.trim().toLowerCase()
+    const telefoneNormalizado = telefone.trim().replace(/\s+/g, '')
 
-    if (!emailNormalizado || !password) {
+    if (!telefoneNormalizado || !password) {
       setErro(
-        'Informe o email e a palavra-passe.'
+        'Informe o número de telefone e a palavra-passe.'
       )
       return
     }
@@ -56,7 +56,7 @@ export default function SignIn() {
         credentials: 'include',
         cache: 'no-store',
         body: JSON.stringify({
-          email: emailNormalizado,
+          telefone: telefoneNormalizado,
           senha: password,
         }),
       })
@@ -66,7 +66,7 @@ export default function SignIn() {
       if (!resposta.ok || !dados?.sucesso) {
         setErro(
           dados?.mensagem ||
-            'Email ou palavra-passe incorretos.'
+            'Número de telefone ou palavra-passe incorretos.'
         )
         setEstaAProcessar(false)
         return
@@ -76,15 +76,6 @@ export default function SignIn() {
         dados?.usuario?.perfil ?? ''
       ).toUpperCase()
 
-      /*
-       * O servidor já identificou o perfil.
-       *
-       * GESTOR
-       * → /gestao
-       *
-       * Qualquer outro perfil
-       * → /
-       */
       setSucesso(true)
 
       if (perfil === 'GESTOR') {
@@ -217,33 +208,34 @@ export default function SignIn() {
             className="space-y-5"
           >
 
-            {/* EMAIL */}
+            {/* TELEFONE */}
             <div>
 
               <label
-                htmlFor="email"
+                htmlFor="telefone"
                 className="mb-2 block text-sm font-bold text-[#382515]"
               >
-                Email
+                Número de telefone
               </label>
 
               <div className="relative">
 
-                <Mail
+                <Phone
                   size={19}
                   className="absolute left-4 top-1/2 -translate-y-1/2 text-[#a58b6d]"
                 />
 
                 <input
-                  id="email"
-                  type="email"
-                  value={email}
+                  id="telefone"
+                  type="tel"
+                  inputMode="tel"
+                  value={telefone}
                   onChange={(e) =>
-                    setEmail(e.target.value)
+                    setTelefone(e.target.value)
                   }
-                  placeholder="seuemail@email.com"
+                  placeholder="Ex.: 84 123 4567"
                   required
-                  autoComplete="email"
+                  autoComplete="tel"
                   disabled={estaAProcessar}
                   className="w-full rounded-xl border border-[#e7d5b8] bg-[#fffdf8] py-3.5 pl-12 pr-4 text-sm text-[#382515] outline-none transition placeholder:text-[#b9a58d] focus:border-[#166534] focus:ring-4 focus:ring-green-100 disabled:cursor-not-allowed disabled:opacity-60"
                 />
@@ -385,4 +377,3 @@ export default function SignIn() {
     </main>
   )
 }
-

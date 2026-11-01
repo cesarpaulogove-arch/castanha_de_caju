@@ -1,10 +1,8 @@
-
 import Link from 'next/link'
 import { cookies } from 'next/headers'
 import {
   ArrowLeft,
   Truck,
-  Mail,
   Phone,
   MapPin,
   ShieldCheck,
@@ -105,7 +103,6 @@ export default async function TransportadoresPage() {
     select: {
       id: true,
       nome: true,
-      email: true,
       telefone: true,
       localizacao: true,
       ativo: true,
@@ -237,10 +234,11 @@ export default async function TransportadoresPage() {
                               </p>
 
                               <div className="mt-1 flex items-center gap-1.5 text-xs text-[#806b55]">
-                                <Mail size={13} />
+                                <Phone size={13} />
 
                                 <span>
-                                  {transportador.email}
+                                  {transportador.telefone ||
+                                    'Não informado'}
                                 </span>
                               </div>
                             </div>
@@ -265,7 +263,8 @@ export default async function TransportadoresPage() {
                             <MapPin size={16} />
 
                             <span>
-                              {transportador.localizacao}
+                              {transportador.localizacao ||
+                                'Não informada'}
                             </span>
                           </div>
                         </td>
@@ -306,4 +305,3 @@ export default async function TransportadoresPage() {
     </main>
   )
 }
-

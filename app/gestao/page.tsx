@@ -12,6 +12,7 @@ import {
   SESSION_COOKIE,
   gerarHashToken,
 } from '@/lib/auth-session'
+
 import ModuloProdutores from '../components/gestao/ModuloProdutores'
 import ModuloClientes from '../components/gestao/ModuloClientes'
 import ModuloEntregadores from '../components/gestao/ModuloEntregadores'
@@ -19,8 +20,6 @@ import ModuloFornecedores from '../components/gestao/ModuloFornecedores'
 import ModuloProcessadores from '../components/gestao/ModuloProcessadores'
 import ModuloTransportadores from '../components/gestao/ModuloTransportadores'
 import ModuloStocks from '../components/gestao/ModuloStocks'
-
-
 
 export const dynamic = 'force-dynamic'
 
@@ -61,21 +60,8 @@ async function verificarGestor() {
     return false
   }
 
-  const gestorEmail = process.env.GESTOR_EMAIL
-    ?.trim()
-    .toLowerCase()
-
-  if (!gestorEmail) {
-    return false
-  }
-
   return true
 }
-
-const [ stocks, movimentosStock, ] = await Promise.all([ prisma.stock.findMany(), prisma.movimentoStock.count(), ])
-
-const quantidadeStock = stocks.reduce( (total, stock) => total + Number(stock.quantidade), 0 )
-
 
 export default async function GestaoPage() {
   const autenticado = await verificarGestor()
@@ -85,6 +71,7 @@ export default async function GestaoPage() {
       <main className="min-h-screen bg-[#fff8e8] px-6 py-16">
         <div className="mx-auto flex min-h-[70vh] max-w-xl items-center justify-center">
           <div className="w-full rounded-3xl border border-[#eadbc4] bg-white p-8 text-center shadow-[0_20px_60px_rgba(92,64,32,0.10)]">
+
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50">
               <LayoutDashboard
                 size={30}
@@ -107,20 +94,44 @@ export default async function GestaoPage() {
             >
               Entrar na conta
             </Link>
+
           </div>
         </div>
       </main>
     )
   }
 
+  // =========================================================
+  // RECUPERAR DADOS DO STOCK
+  // =========================================================
+
+  const [stocks, movimentosStock] = await Promise.all([
+    prisma.stock.findMany(),
+
+    prisma.movimentoStock.count(),
+  ])
+
+  const quantidadeStock = stocks.reduce(
+    (total, stock) =>
+      total + Number(stock.quantidade),
+    0
+  )
+
   return (
     <main className="min-h-screen bg-[#fff8e8]">
+
       <div className="mx-auto w-full max-w-7xl px-5 py-8 sm:px-8 lg:px-10">
+
         {/* CABEÇALHO */}
+
         <header className="mb-10">
+
           <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+
             <div>
+
               <div className="flex items-center gap-3">
+
                 <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#166534] shadow-sm">
                   <LayoutDashboard
                     size={24}
@@ -129,6 +140,7 @@ export default async function GestaoPage() {
                 </div>
 
                 <div>
+
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#a58b6d]">
                     Área administrativa
                   </p>
@@ -136,7 +148,9 @@ export default async function GestaoPage() {
                   <h1 className="text-3xl font-black tracking-tight text-[#382515]">
                     Gestão
                   </h1>
+
                 </div>
+
               </div>
 
               <p className="mt-4 max-w-2xl text-sm leading-6 text-[#806b55]">
@@ -144,6 +158,7 @@ export default async function GestaoPage() {
                 utilizadores, operações, stocks e
                 vendas da plataforma.
               </p>
+
             </div>
 
             <Link
@@ -153,12 +168,17 @@ export default async function GestaoPage() {
               <ArrowLeft size={18} />
               Voltar ao início
             </Link>
+
           </div>
+
         </header>
 
         {/* MÓDULOS */}
+
         <section>
+
           <div className="mb-5">
+
             <h2 className="text-xl font-extrabold text-[#382515]">
               Módulos de gestão
             </h2>
@@ -167,9 +187,11 @@ export default async function GestaoPage() {
               Consulte e administre os dados reais
               armazenados na plataforma.
             </p>
+
           </div>
 
           <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+
             <ModuloProdutores />
 
             <ModuloClientes />
@@ -182,12 +204,18 @@ export default async function GestaoPage() {
 
             <ModuloTransportadores />
 
-            <ModuloStocks produtos={stocks.length} quantidade={quantidadeStock} movimentos={movimentosStock} />
+            <ModuloStocks
+              produtos={stocks.length}
+              quantidade={quantidadeStock}
+              movimentos={movimentosStock}
+            />
 
           </div>
+
         </section>
+
       </div>
+
     </main>
   )
 }
-

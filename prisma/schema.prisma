@@ -178,7 +178,7 @@ model MovimentoStock {
   producaoId       Int?
   fornecimentoId   Int?
   processamentoId  Int?
-  gestorEmail      String?
+  gestorTelefone String?
   descricao        String?
   createdAt        DateTime           @default(now())
   fornecimento     Fornecimento?      @relation(fields: [fornecimentoId], references: [id], onDelete: Restrict)

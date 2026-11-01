@@ -168,7 +168,7 @@ export async function POST(request: Request) {
             select: {
               id: true,
               nome: true,
-              email: true,
+              telefone: true,
             },
           },
         },
@@ -238,4 +238,3 @@ async function gerarNumeroLote(
 
   return `${prefixo}-${String(numero).padStart(5, '0')}`
 }
-

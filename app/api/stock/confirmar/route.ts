@@ -199,9 +199,9 @@ export async function POST(request: Request) {
 
             producaoId: producao.id,
 
-            gestorEmail:
-              process.env.GESTOR_EMAIL ??
-              null,
+           gestorTelefone:
+            process.env.GESTOR_TELEFONE ??
+            null,
 
             descricao:
               `Entrada de ${quantidade.toFixed(
@@ -347,9 +347,9 @@ export async function POST(request: Request) {
               fornecimentoId:
                 fornecimento.id,
 
-              gestorEmail:
-                process.env.GESTOR_EMAIL ??
-                null,
+              gestorTelefone:
+              process.env.GESTOR_TELEFONE ??
+              null,
 
               descricao:
                 `Entrada de ${quantidade.toFixed(
@@ -505,9 +505,9 @@ export async function POST(request: Request) {
               processamentoId:
                 processamento.id,
 
-              gestorEmail:
-                process.env.GESTOR_EMAIL ??
-                null,
+             gestorTelefone:
+              process.env.GESTOR_TELEFONE ??
+              null,
 
               descricao:
                 `Entrada de ${quantidade.toFixed(

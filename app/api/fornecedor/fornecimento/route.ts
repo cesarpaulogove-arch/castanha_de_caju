@@ -168,15 +168,15 @@ export async function POST(
           dataFornecimento,
         },
         include: {
-          produto: true,
-          fornecedor: {
-            select: {
-              id: true,
-              nome: true,
-              email: true,
-            },
+        produto: true,
+        fornecedor: {
+          select: {
+            id: true,
+            nome: true,
+            telefone: true,
           },
         },
+      },
       })
 
     return NextResponse.json(
