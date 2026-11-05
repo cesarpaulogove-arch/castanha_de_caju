@@ -1,5 +1,5 @@
 
-import type { CapacitorConfig } from '@capacitor/cli';
+import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
   appId: 'com.castanhadecaju.app',
@@ -7,13 +7,13 @@ const config: CapacitorConfig = {
   webDir: 'public',
 
   server: {
-    url: 'https://castanha-de-caju.vercel.app/',
-    cleartext: false
+    url: 'https://castanhadiango.com/',
+    cleartext: false,
   },
 
   android: {
-    useLegacyBridge: true
-  }
-};
+    useLegacyBridge: true,
+  },
+}
 
-export default config;
+export default config
