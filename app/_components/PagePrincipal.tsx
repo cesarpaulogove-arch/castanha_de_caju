@@ -13,7 +13,7 @@ import Carrinho from './Carrinho'
 import MapaEntrega from './MapaEntrega'
 import { AuthProvider } from '../AuthContext'
 import RegistoPerfis from './RegistoPerfis'
-import DestaquesServicos from './DestaquesServicos'
+
 
 // ============================================================
 // BOTÃO DE CASTANHAS NÃO PROCESSADAS
@@ -471,16 +471,6 @@ export default function LojaCastanhasEcraUnico() {
             <BotaoGrandesVolumes />
           </div>
         )}
-
-        {/* ======================================================
-            DESTAQUES DOS SERVIÇOS
-        ======================================================= */}
-
-        <DestaquesServicos />
-
-        {/* ======================================================
-            REGISTO DE PERFIS
-        ======================================================= */}
 
         <RegistoPerfis />
       </main>
