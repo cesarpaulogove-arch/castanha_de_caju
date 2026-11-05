@@ -5,6 +5,8 @@ import { revalidatePath } from 'next/cache'
 
 import { prisma } from '@/lib/prisma'
 import { obterEntregadorAutenticado } from '@/lib/auth-user'
+import AtualizarLocalizacao from '../components/entregador/AtualizarLocalizacao'
+
 
 export const dynamic = 'force-dynamic'
 
@@ -102,6 +104,7 @@ export default async function EntregadorPage() {
                   ● OFFLINE
                 </span>
               )}
+              <AtualizarLocalizacao online={entregador.online} />
 
               <form action={alternarDisponibilidade}>
                 <button

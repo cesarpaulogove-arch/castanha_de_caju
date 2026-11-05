@@ -24,7 +24,6 @@ interface MapaEntregaProps {
   longitudeCliente?: number
 }
 
-// Validar os dados recebidos da API
 function temLocalizacaoValida(
   valor: unknown,
 ): valor is Entregador {
@@ -37,18 +36,22 @@ function temLocalizacaoValida(
 
   const estafeta = valor as Record<string, unknown>
 
+  const latitude = Number(estafeta.latitude)
+  const longitude = Number(estafeta.longitude)
+
   return (
     typeof estafeta.id === 'number' &&
     typeof estafeta.nome === 'string' &&
     estafeta.online === true &&
-    typeof estafeta.latitude === 'number' &&
-    Number.isFinite(estafeta.latitude) &&
-    estafeta.latitude >= -90 &&
-    estafeta.latitude <= 90 &&
-    typeof estafeta.longitude === 'number' &&
-    Number.isFinite(estafeta.longitude) &&
-    estafeta.longitude >= -180 &&
-    estafeta.longitude <= 180
+    estafeta.latitude !== null &&
+    estafeta.longitude !== null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude) &&
+    latitude >= -90 &&
+    latitude <= 90 &&
+    longitude >= -180 &&
+    longitude <= 180 &&
+    (latitude !== 0 || longitude !== 0)
   )
 }
 
@@ -93,12 +96,13 @@ export default function MapaEntrega({
           )
         }
 
-        // Apenas entregadores com GPS válido
-        const validos = dados.filter(
-          temLocalizacaoValida,
-        )
+      const validos = dados.filter(temLocalizacaoValida).map((e) => ({
+            ...e,
+            latitude: Number(e.latitude),
+            longitude: Number(e.longitude),
+          }))
 
-        setEntregadores(validos)
+setEntregadores(validos)
       } catch (error) {
         if (
           error instanceof Error &&
